@@ -1,0 +1,19 @@
+{
+  "profession": "dental",
+  "display_name": "Dental Clinic",
+  "primary_color": "#0EA5E9",
+  "services": [
+    "Teeth Cleaning",
+    "Root Canal",
+    "Braces",
+    "Teeth Whitening",
+    "Dental Implants"
+  ],
+  "features": [
+    "appointment_booking",
+    "whatsapp_cta",
+    "google_maps",
+    "testimonials"
+  ],
+  "hero_tagline": "Your Smile, Our Priority"
+}

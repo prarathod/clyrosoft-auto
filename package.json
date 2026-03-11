@@ -1,0 +1,19 @@
+{
+  "name": "clinic-saas",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:template": "npm run dev --workspace=apps/template",
+    "build": "npm run build --workspaces",
+    "scrape": "npm run start --workspace=packages/scraper",
+    "outreach": "npm run start --workspace=packages/outreach"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.99.1"
+  }
+}
