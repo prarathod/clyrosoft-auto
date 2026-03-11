@@ -2,23 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') ?? ''
-  const rootDomain = process.env.ROOT_DOMAIN ?? 'yourdomain.com'
+  const rootDomain = process.env.ROOT_DOMAIN ?? ''
 
-  // Extract subdomain: sharmadental.yourdomain.com → sharmadental
-  const subdomain = hostname.replace(`.${rootDomain}`, '').replace(`:${req.nextUrl.port}`, '')
-
-  // Skip root domain, www, and Next.js internals
+  // Subdomain routing: only active when a custom domain is configured
+  // Without a custom domain, use path-based routing: /[subdomain]
   if (
-    subdomain === rootDomain ||
-    subdomain === 'www' ||
-    subdomain === '' ||
+    !rootDomain ||
+    rootDomain.includes('vercel.app') ||
     req.nextUrl.pathname.startsWith('/_next') ||
     req.nextUrl.pathname.startsWith('/api')
   ) {
     return NextResponse.next()
   }
 
-  // Rewrite to /[subdomain]/... while keeping the URL clean for the user
+  const subdomain = hostname
+    .replace(`.${rootDomain}`, '')
+    .replace(`:${req.nextUrl.port}`, '')
+
+  if (subdomain === rootDomain || subdomain === 'www' || subdomain === '') {
+    return NextResponse.next()
+  }
+
   const url = req.nextUrl.clone()
   url.pathname = `/${subdomain}${req.nextUrl.pathname}`
   return NextResponse.rewrite(url)
