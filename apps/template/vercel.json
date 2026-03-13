@@ -1,5 +1,3 @@
 {
-  "buildCommand": "cd ../.. && npm install && cd apps/template && npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "echo 'install handled by buildCommand'"
+  "installCommand": "npm install --prefix ../.."
 }
