@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 // PATCH /api/clients/[id] — update status, payment info, etc.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {

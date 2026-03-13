@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import type { Client } from '@/types/database'
 
 // GET /api/clients — list all or filter by status
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/clients — create a new client (called by scraper)
 export async function POST(req: NextRequest) {
-  const body: Client['Insert'] = await req.json()
+  const body: Omit<Client, 'id' | 'created_at'> = await req.json()
 
   // Auto-generate subdomain from clinic name if not provided
   if (!body.subdomain) {

@@ -1,0 +1,27 @@
+function Bone({ className }: { className: string }) {
+  return <div className={`bg-gray-200 rounded-lg animate-pulse ${className}`} />
+}
+
+export default function Loading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-gray-200 animate-pulse py-20 px-4 text-center">
+        <Bone className="h-4 w-32 mx-auto mb-4" />
+        <Bone className="h-10 w-48 mx-auto" />
+      </div>
+      <div className="py-16 px-4 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl p-6 border space-y-3">
+              <Bone className="h-10 w-10" />
+              <Bone className="h-5 w-36" />
+              <Bone className="h-3 w-full" />
+              <Bone className="h-3 w-4/5" />
+              <Bone className="h-3 w-24" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -1,89 +1,90 @@
-import { supabaseAdmin } from '@/lib/supabase'
-import type { Client } from '@/types/database'
-
-export const revalidate = 0
-
-async function getClients(): Promise<Client[]> {
-  const { data, error } = await supabaseAdmin
-    .from('clients')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) throw new Error(error.message)
-  return data ?? []
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  demo: 'bg-yellow-100 text-yellow-800',
-  paying: 'bg-green-100 text-green-800',
-  inactive: 'bg-gray-100 text-gray-600',
-}
+import { redirect } from 'next/navigation'
+import { createServerSupabaseClient } from '@/lib/supabaseServer'
+import Link from 'next/link'
 
 export default async function DashboardPage() {
-  const clients = await getClients()
+  const supabase = createServerSupabaseClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) redirect('/login')
 
-  const stats = {
-    total: clients.length,
-    paying: clients.filter((c) => c.status === 'paying').length,
-    demo: clients.filter((c) => c.status === 'demo').length,
-    mrr: clients
-      .filter((c) => c.status === 'paying')
-      .reduce((sum, c) => sum + c.monthly_amount, 0),
-  }
+  const { data: clinic } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('email', session.user.email!)
+    .single()
+
+  if (!clinic) redirect('/login')
+
+  const isLive = clinic.status === 'paying'
+  const siteUrl = `${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'}/${clinic.subdomain}`
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Clinic SaaS Dashboard</h1>
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        {[
-          { label: 'Total Clients', value: stats.total },
-          { label: 'Paying', value: stats.paying },
-          { label: 'Demo', value: stats.demo },
-          { label: 'MRR (₹)', value: `₹${stats.mrr.toLocaleString()}` },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl p-6 shadow-sm border">
-            <p className="text-sm text-gray-500">{stat.label}</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Status card */}
+      <div className={`rounded-2xl p-6 border ${isLive ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className={`inline-flex items-center gap-2 text-sm font-semibold mb-2 ${isLive ? 'text-green-700' : 'text-yellow-700'}`}>
+              <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
+              {isLive ? 'Your site is LIVE' : 'Demo Mode'}
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">{clinic.clinic_name}</h2>
+            <p className="text-sm text-gray-600 mt-1">Dr. {clinic.doctor_name} · {clinic.area}, {clinic.city}</p>
+            {!isLive && (
+              <p className="text-xs text-yellow-700 mt-2">
+                Upgrade to go live and remove the demo banner from your site.
+              </p>
+            )}
           </div>
+          <a
+            href={siteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1.5 shadow-sm"
+          >
+            View Site ↗
+          </a>
+        </div>
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { href: '/dashboard/website', icon: '🎨', title: 'Change Theme', desc: 'Pick a look for your site' },
+          { href: '/dashboard/content', icon: '📝', title: 'Edit Content', desc: 'Update services & info' },
+          { href: '/dashboard/analytics', icon: '📊', title: 'View Stats', desc: 'Visits & WhatsApp clicks' },
+        ].map((card) => (
+          <Link
+            key={card.href}
+            href={card.href}
+            className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-blue-200 transition-all group"
+          >
+            <div className="text-2xl mb-3">{card.icon}</div>
+            <p className="font-semibold text-sm text-gray-900 group-hover:text-blue-700 transition-colors">{card.title}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{card.desc}</p>
+          </Link>
         ))}
       </div>
 
-      {/* Clients table */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              {['Clinic', 'Doctor', 'Profession', 'City', 'Subdomain', 'Status', 'MRR'].map((h) => (
-                <th key={h} className="text-left px-4 py-3 font-medium text-gray-600">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr key={client.id} className="border-b last:border-0 hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium">{client.clinic_name}</td>
-                <td className="px-4 py-3">{client.doctor_name}</td>
-                <td className="px-4 py-3 capitalize">{client.profession_type}</td>
-                <td className="px-4 py-3">{client.city}, {client.area}</td>
-                <td className="px-4 py-3 text-blue-600 font-mono text-xs">{client.subdomain}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[client.status]}`}>
-                    {client.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  {client.status === 'paying' ? `₹${client.monthly_amount}` : '—'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {clients.length === 0 && (
-          <p className="text-center py-12 text-gray-400">No clients yet. Run the scraper to add some.</p>
-        )}
+      {/* Clinic details */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <h3 className="font-semibold text-gray-900 mb-4">Clinic Details</h3>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          {[
+            { label: 'Clinic Name', value: clinic.clinic_name },
+            { label: 'Doctor', value: `Dr. ${clinic.doctor_name}` },
+            { label: 'Phone', value: clinic.phone },
+            { label: 'Email', value: clinic.email ?? '—' },
+            { label: 'Location', value: `${clinic.area}, ${clinic.city}` },
+            { label: 'Site URL', value: `/${clinic.subdomain}` },
+          ].map((row) => (
+            <div key={row.label}>
+              <p className="text-gray-400 text-xs">{row.label}</p>
+              <p className="text-gray-900 font-medium mt-0.5">{row.value}</p>
+            </div>
+          ))}
+        </div>
       </div>
-    </main>
+    </div>
   )
 }

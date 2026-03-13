@@ -2,27 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') ?? ''
-  const rootDomain = process.env.ROOT_DOMAIN ?? ''
+  const rootDomain = process.env.ROOT_DOMAIN ?? 'localhost:3000'
 
-  // Subdomain routing: only active when a custom domain is configured
-  // Without a custom domain, use path-based routing: /[subdomain]
+  // Always pass through static assets and API routes
   if (
-    !rootDomain ||
-    rootDomain.includes('vercel.app') ||
     req.nextUrl.pathname.startsWith('/_next') ||
     req.nextUrl.pathname.startsWith('/api')
   ) {
     return NextResponse.next()
   }
 
-  const subdomain = hostname
-    .replace(`.${rootDomain}`, '')
-    .replace(`:${req.nextUrl.port}`, '')
-
-  if (subdomain === rootDomain || subdomain === 'www' || subdomain === '') {
+  // Pass through when:
+  // - no custom domain configured
+  // - using vercel.app (no wildcard subdomain support)
+  // - request IS the root domain (not a subdomain) → use path-based routing
+  if (!rootDomain || rootDomain.includes('vercel.app') || hostname === rootDomain) {
     return NextResponse.next()
   }
 
+  // Extract subdomain from hostname (e.g. sharma.myclinic.com → sharma)
+  const subdomain = hostname.replace(`.${rootDomain}`, '')
+
+  // If no subdomain extracted (replacement failed) or it's www, pass through
+  if (!subdomain || subdomain === 'www' || subdomain === hostname) {
+    return NextResponse.next()
+  }
+
+  // Rewrite subdomain.domain.com/path → /subdomain/path
   const url = req.nextUrl.clone()
   url.pathname = `/${subdomain}${req.nextUrl.pathname}`
   return NextResponse.rewrite(url)

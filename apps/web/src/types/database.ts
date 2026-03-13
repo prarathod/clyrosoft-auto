@@ -14,25 +14,20 @@ export interface Client {
   payment_date: string | null
   monthly_amount: number
   created_at: string
+  // extended fields (nullable, added progressively)
+  theme?: string | null
+  tagline?: string | null
+  doctor_bio?: string | null
+  cta_text?: string | null
+  google_maps_link?: string | null
+  photos?: string[] | null
+  services?: string[] | null
+  testimonials?: Array<{ name: string; text: string; treatment: string }> | null
 }
 
-export interface Database {
-  public: {
-    Tables: {
-      clients: {
-        Row: Client
-        Insert: Omit<Client, 'id' | 'created_at'>
-        Update: Partial<Omit<Client, 'id' | 'created_at'>>
-      }
-    }
-  }
-}
-
-export interface ProfessionConfig {
-  profession: string
-  display_name: string
-  primary_color: string
-  services: string[]
-  features: string[]
-  hero_tagline: string
+export interface AnalyticsEvent {
+  id: string
+  subdomain: string
+  event_type: 'page_view' | 'whatsapp_click' | 'form_submit'
+  created_at: string
 }

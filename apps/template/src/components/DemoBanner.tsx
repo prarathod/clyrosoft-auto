@@ -2,23 +2,24 @@
 
 interface Props {
   clinicName: string
-  phone: string
 }
 
-export default function DemoBanner({ clinicName, phone }: Props) {
+export default function DemoBanner({ clinicName }: Props) {
+  // Owner phone — set NEXT_PUBLIC_OWNER_PHONE in .env.local
+  const ownerPhone = process.env.NEXT_PUBLIC_OWNER_PHONE ?? '9999999999'
   const message = encodeURIComponent(
-    `Hi! I saw the demo website you created for ${clinicName}. I'm interested in activating it at ₹999/month.`
+    `Hi! I saw the demo website created for ${clinicName}. I'd like to activate it for ₹999/month.`
   )
   return (
-    <div className="bg-amber-400 text-amber-900 text-center py-3 px-4 text-sm font-medium">
-      🎉 This is a <strong>free demo</strong> website created for {clinicName}.{' '}
+    <div className="bg-amber-400 text-amber-900 text-center py-2.5 px-4 text-sm font-medium sticky top-0 z-[60]">
+      🎉 This is a <strong>free demo</strong> website for {clinicName}.{' '}
       <a
-        href={`https://wa.me/91${phone}?text=${message}`}
+        href={`https://wa.me/91${ownerPhone}?text=${message}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="underline font-bold hover:text-amber-700"
+        className="underline font-bold hover:text-amber-800"
       >
-        Activate for ₹999/month →
+        Go live in 24 hours → ₹499/month
       </a>
     </div>
   )

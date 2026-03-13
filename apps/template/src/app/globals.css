@@ -1,3 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Default CSS variable values (overridden per-theme in layout wrapper) */
+:root {
+  --primary: #2563EB;
+  --bg: #FFFFFF;
+  --text: #111827;
+  --text-muted: #6B7280;
+  --card-bg: #FFFFFF;
+  --card-border: #E5E7EB;
+  --section-alt: #F9FAFB;
+  --footer-bg: #111827;
+  --footer-text: #9CA3AF;
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --radius: 0.75rem;
+  --hero-bg: #2563EB;
+  --hero-text: #FFFFFF;
+  --hero-subtext: rgba(255,255,255,0.80);
+  --hero-accent: rgba(255,255,255,0.18);
+}
+
+html {
+  scroll-behavior: smooth;
+}

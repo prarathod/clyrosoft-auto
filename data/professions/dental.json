@@ -1,7 +1,8 @@
 {
   "profession": "dental",
   "display_name": "Dental Clinic",
-  "primary_color": "#0EA5E9",
+  "primary_color": "#2563EB",
+  "theme": "classic",
   "services": [
     "Teeth Cleaning",
     "Root Canal",

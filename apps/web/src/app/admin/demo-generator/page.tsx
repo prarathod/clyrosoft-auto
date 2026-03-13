@@ -1,0 +1,215 @@
+'use client'
+
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
+
+const PROFESSIONS = ['dental', 'skin', 'physio', 'general', 'eye', 'orthopedic']
+const THEMES = ['classic', 'modern', 'minimal']
+const TEMPLATE_URL = process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3000'
+
+function generateSubdomain(clinicName: string): string {
+  return clinicName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 30)
+    .replace(/-+$/, '')
+}
+
+function DemoGeneratorForm() {
+  const searchParams = useSearchParams()
+  const [form, setForm] = useState({
+    clinic_name: searchParams.get('name') ?? '',
+    doctor_name: searchParams.get('doctor') ?? '',
+    phone: searchParams.get('phone') ?? '',
+    email: '',
+    area: '',
+    city: searchParams.get('city') ?? '',
+    profession_type: 'dental',
+    theme: 'classic',
+    tagline: '',
+  })
+  const [subdomain, setSubdomain] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<{ url: string; subdomain: string } | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (form.clinic_name) {
+      setSubdomain(generateSubdomain(form.clinic_name))
+    }
+  }, [form.clinic_name])
+
+  function set(field: string) {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [field]: e.target.value }))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setResult(null)
+
+    try {
+      const supabase = createClient()
+      const finalSubdomain = subdomain || generateSubdomain(form.clinic_name)
+
+      // Check subdomain uniqueness
+      const { data: existing } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('subdomain', finalSubdomain)
+        .single()
+
+      if (existing) {
+        setError(`Subdomain "${finalSubdomain}" already exists. Try a different clinic name.`)
+        setLoading(false)
+        return
+      }
+
+      const { error: insertError } = await supabase.from('clients').insert({
+        clinic_name: form.clinic_name,
+        doctor_name: form.doctor_name,
+        phone: form.phone,
+        email: form.email || null,
+        area: form.area,
+        city: form.city,
+        subdomain: finalSubdomain,
+        profession_type: form.profession_type,
+        status: 'demo',
+        monthly_amount: 999,
+        theme: form.theme,
+        tagline: form.tagline || null,
+      })
+
+      if (insertError) throw insertError
+
+      setResult({ url: `${TEMPLATE_URL}/${finalSubdomain}`, subdomain: finalSubdomain })
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create demo')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const inputClass = "w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-600"
+  const labelClass = "block text-sm font-medium text-gray-300 mb-1"
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-black text-white mb-1">Demo Generator</h1>
+        <p className="text-gray-500 text-sm">Create a new demo clinic website instantly</p>
+      </div>
+
+      {result ? (
+        <div className="bg-green-950 border border-green-800 rounded-2xl p-8 text-center">
+          <div className="text-4xl mb-4">🎉</div>
+          <h2 className="text-xl font-bold text-white mb-2">Demo Created!</h2>
+          <p className="text-gray-400 text-sm mb-6">The demo site is live at:</p>
+          <a
+            href={result.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-colors"
+          >
+            ↗ Open Demo: {result.subdomain}
+          </a>
+          <div className="mt-6 p-4 bg-gray-900 rounded-xl text-left">
+            <p className="text-xs text-gray-500 mb-1">Demo URL to send client:</p>
+            <p className="text-blue-400 font-mono text-sm">{result.url}</p>
+          </div>
+          <button
+            onClick={() => { setResult(null); setForm({ clinic_name: '', doctor_name: '', phone: '', email: '', area: '', city: '', profession_type: 'dental', theme: 'classic', tagline: '' }) }}
+            className="mt-6 text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            Create another →
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className={labelClass}>Clinic Name *</label>
+              <input type="text" required value={form.clinic_name} onChange={set('clinic_name')} placeholder="Sharma Dental Clinic" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Doctor Name *</label>
+              <input type="text" required value={form.doctor_name} onChange={set('doctor_name')} placeholder="Ramesh Sharma" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Phone *</label>
+              <input type="tel" required value={form.phone} onChange={set('phone')} placeholder="9876543210" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Email</label>
+              <input type="email" value={form.email} onChange={set('email')} placeholder="sharma@example.com" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Area *</label>
+              <input type="text" required value={form.area} onChange={set('area')} placeholder="Koramangala" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>City *</label>
+              <input type="text" required value={form.city} onChange={set('city')} placeholder="Bangalore" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Profession *</label>
+              <select value={form.profession_type} onChange={set('profession_type')} className={inputClass}>
+                {PROFESSIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Theme</label>
+              <select value={form.theme} onChange={set('theme')} className={inputClass}>
+                {THEMES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>Tagline</label>
+            <input type="text" value={form.tagline} onChange={set('tagline')} placeholder="Your Smile, Our Priority" className={inputClass} />
+          </div>
+
+          {/* Subdomain preview */}
+          <div className="bg-gray-800 rounded-lg p-4">
+            <p className="text-xs text-gray-400 mb-1">Generated subdomain:</p>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-blue-400 text-sm">{subdomain || '—'}</p>
+              <input
+                type="text"
+                value={subdomain}
+                onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                placeholder="edit if needed"
+                className="flex-1 bg-gray-700 border border-gray-600 text-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <p className="text-xs text-gray-600 mt-1">Demo URL: {TEMPLATE_URL}/{subdomain || '...'}</p>
+          </div>
+
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Creating…' : '⚡ Generate Demo Site'}
+          </button>
+        </form>
+      )}
+    </div>
+  )
+}
+
+export default function DemoGeneratorPage() {
+  return (
+    <Suspense fallback={<div className="text-gray-400">Loading…</div>}>
+      <DemoGeneratorForm />
+    </Suspense>
+  )
+}
