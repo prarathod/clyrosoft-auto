@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
 
 const PROFESSIONS = ['dental', 'skin', 'physio', 'general', 'eye', 'orthopedic']
 const THEMES = ['classic', 'modern', 'minimal']
@@ -54,38 +53,28 @@ function DemoGeneratorForm() {
     setResult(null)
 
     try {
-      const supabase = createClient()
       const finalSubdomain = subdomain || generateSubdomain(form.clinic_name)
 
-      // Check subdomain uniqueness
-      const { data: existing } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('subdomain', finalSubdomain)
-        .single()
-
-      if (existing) {
-        setError(`Subdomain "${finalSubdomain}" already exists. Try a different clinic name.`)
-        setLoading(false)
-        return
-      }
-
-      const { error: insertError } = await supabase.from('clients').insert({
-        clinic_name: form.clinic_name,
-        doctor_name: form.doctor_name,
-        phone: form.phone,
-        email: form.email || null,
-        area: form.area,
-        city: form.city,
-        subdomain: finalSubdomain,
-        profession_type: form.profession_type,
-        status: 'demo',
-        monthly_amount: 999,
-        theme: form.theme,
-        tagline: form.tagline || null,
+      const res = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clinic_name: form.clinic_name,
+          doctor_name: form.doctor_name,
+          phone: form.phone,
+          email: form.email || null,
+          area: form.area,
+          city: form.city,
+          subdomain: finalSubdomain,
+          profession_type: form.profession_type,
+          status: 'demo',
+          monthly_amount: 499,
+          theme: form.theme,
+          tagline: form.tagline || null,
+        }),
       })
-
-      if (insertError) throw insertError
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed to create demo')
 
       setResult({ url: `${TEMPLATE_URL}/${finalSubdomain}`, subdomain: finalSubdomain })
     } catch (err: unknown) {

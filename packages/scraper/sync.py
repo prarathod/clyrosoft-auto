@@ -2,10 +2,12 @@
 Supabase sync — inserts scraped leads via REST API directly.
 No supabase Python package needed — uses requests + Supabase REST API.
 Skips duplicates by checking phone number before inserting.
+Also auto-creates a demo client record for each new lead.
 """
 
 import json
 import os
+import re
 import sys
 from dataclasses import asdict
 
@@ -36,6 +38,37 @@ def _base() -> str:
     return f"{url}/rest/v1"
 
 
+PROFESSION_MAP = {
+    "dental": "dental",
+    "eye": "eye",
+    "physiotherapy": "physio",
+    "skin": "skin",
+    "child": "general",
+}
+
+def profession_from_query(query: str) -> str:
+    q = query.lower()
+    for key, val in PROFESSION_MAP.items():
+        if key in q:
+            return val
+    return "general"
+
+def make_subdomain(clinic_name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]", "-", clinic_name.lower())
+    slug = re.sub(r"-+", "-", slug).strip("-")[:30]
+    return slug
+
+def get_existing_subdomains() -> set:
+    resp = requests.get(
+        f"{_base()}/clients",
+        headers={**_headers(), "Prefer": ""},
+        params={"select": "subdomain"},
+        timeout=15,
+    )
+    if resp.status_code != 200:
+        return set()
+    return {row["subdomain"] for row in resp.json() if row.get("subdomain")}
+
 def get_existing_phones() -> set:
     resp = requests.get(
         f"{_base()}/leads",
@@ -49,6 +82,51 @@ def get_existing_phones() -> set:
     return {row["phone"] for row in resp.json() if row.get("phone")}
 
 
+def _create_demo_client(data: dict, existing_subdomains: set) -> None:
+    """Auto-create a demo client record so the site is immediately accessible."""
+    clinic_name = data.get("clinic_name", "")
+    if not clinic_name:
+        return
+
+    # Generate unique subdomain
+    base = make_subdomain(clinic_name)
+    subdomain = base
+    suffix = 1
+    while subdomain in existing_subdomains:
+        subdomain = f"{base}-{suffix}"
+        suffix += 1
+
+    profession = profession_from_query(data.get("query", ""))
+
+    client_row = {
+        "clinic_name": clinic_name,
+        "doctor_name": data.get("doctor_name", "Doctor"),
+        "phone": data.get("phone", ""),
+        "email": None,
+        "area": data.get("area", ""),
+        "city": data.get("city", ""),
+        "subdomain": subdomain,
+        "profession_type": profession,
+        "status": "demo",
+        "monthly_amount": 499,
+        "photos": data.get("photos") or [],
+    }
+
+    try:
+        resp = requests.post(
+            f"{_base()}/clients",
+            headers=_headers(),
+            json=client_row,
+            timeout=15,
+        )
+        if resp.status_code in (200, 201):
+            existing_subdomains.add(subdomain)
+            print(f"    🌐 Demo site: {subdomain}")
+        # 409 = subdomain conflict (fine, already exists)
+    except Exception:
+        pass  # Don't fail the lead sync if demo creation fails
+
+
 def sync_leads(leads: list, dry_run: bool = False) -> dict:
     scraped = len(leads)
     inserted = 0
@@ -57,6 +135,7 @@ def sync_leads(leads: list, dry_run: bool = False) -> dict:
 
     print(f"\n📡 Connecting to Supabase...")
     existing_phones = get_existing_phones()
+    existing_subdomains = get_existing_subdomains()
     print(f"  Existing leads in DB: {len(existing_phones)} unique phones")
     print(f"\n📤 Syncing {scraped} leads...")
 
@@ -103,9 +182,11 @@ def sync_leads(leads: list, dry_run: bool = False) -> dict:
                 timeout=15,
             )
             if resp.status_code in (200, 201):
-                print(f"  ✅ {clinic_name[:40]} | {row['city']} | {phone}")
                 inserted += 1
                 existing_phones.add(phone)
+                # Auto-create demo client site
+                _create_demo_client(data, existing_subdomains)
+                print(f"  ✅ {clinic_name[:40]} | {row['city']} | {phone}")
             elif resp.status_code == 409:
                 print(f"  ⏭  {clinic_name[:40]} — DB duplicate")
                 skipped += 1

@@ -82,14 +82,25 @@ def extract_city_area(address: str, query: str) -> tuple:
     return city, area
 
 
+GENERIC_NAMES = {"results", "search results", "google maps", "maps", "places", "nearby", ""}
+
+
 # ─── Detail extractor ────────────────────────────────────────────────────────
 
 def extract_detail_panel(page: Page, query: str) -> Optional[ClinicLead]:
     try:
-        name_el = page.query_selector("h1")
-        if not name_el:
-            return None
-        clinic_name = name_el.inner_text().strip()
+        page.wait_for_timeout(500)
+
+        # Try specific Google Maps selectors first to avoid grabbing the "Results" heading
+        clinic_name = ""
+        for sel in ["h1.DUwDvf", "h1.fontHeadlineLarge", "h1"]:
+            el = page.query_selector(sel)
+            if el:
+                text = el.inner_text().strip()
+                if text and text.lower() not in GENERIC_NAMES and len(text) > 2:
+                    clinic_name = text
+                    break
+
         if not clinic_name:
             return None
 
