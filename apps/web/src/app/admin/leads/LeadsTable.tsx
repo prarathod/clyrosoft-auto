@@ -10,6 +10,7 @@ interface Lead {
   doctor_name: string
   phone: string
   city: string
+  area?: string | null
   created_at: string
   contacted?: boolean
   demo_url?: string | null
@@ -170,7 +171,7 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <a
-                      href={`/admin/demo-generator?lead_id=${lead.id}&name=${encodeURIComponent(lead.clinic_name)}&doctor=${encodeURIComponent(lead.doctor_name)}&phone=${lead.phone}&city=${encodeURIComponent(lead.city)}`}
+                      href={`/admin/demo-generator?lead_id=${lead.id}&name=${encodeURIComponent(lead.clinic_name)}&doctor=${encodeURIComponent(lead.doctor_name)}&phone=${lead.phone}&city=${encodeURIComponent(lead.city)}&area=${encodeURIComponent(lead.area ?? '')}`}
                       className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg transition-colors"
                     >
                       {lead.demo_url ? '⚡ Re-demo' : '⚡ Demo'}

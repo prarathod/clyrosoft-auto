@@ -45,7 +45,7 @@ function DemoGeneratorForm() {
     doctor_name: searchParams.get('doctor') ?? '',
     phone: searchParams.get('phone') ?? '',
     email: '',
-    area: '',
+    area: searchParams.get('area') ?? '',
     city: searchParams.get('city') ?? '',
     profession_type: 'dental',
     theme: 'classic',

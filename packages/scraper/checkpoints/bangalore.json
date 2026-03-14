@@ -1,0 +1,33 @@
+{
+  "sweep_id": "bangalore",
+  "city": "Bangalore",
+  "profession": null,
+  "total_queries": 11660,
+  "completed_queries": [
+    "dental clinic MG Road Bangalore",
+    "dental clinic Brigade Road Bangalore",
+    "dental clinic Church Street Bangalore",
+    "dental clinic Residency Road Bangalore",
+    "dental clinic Richmond Town Bangalore",
+    "dental clinic Richmond Road Bangalore",
+    "dental clinic Shivajinagar Bangalore",
+    "dental clinic Vasanth Nagar Bangalore",
+    "dental clinic Race Course Road Bangalore",
+    "dental clinic Cunningham Road Bangalore",
+    "dental clinic Seshadripuram Bangalore",
+    "dental clinic Gandhinagar Bangalore",
+    "dental clinic Majestic Bangalore",
+    "dental clinic Chickpet Bangalore",
+    "dental clinic KR Market Bangalore"
+  ],
+  "total_inserted_all_time": 10,
+  "runs": [
+    {
+      "date": "2026-03-14 14:00",
+      "inserted": 10,
+      "queries_completed": 15
+    }
+  ],
+  "started_at": "2026-03-14T13:56:27.320365",
+  "last_updated": "2026-03-14T14:00:17.551795"
+}
