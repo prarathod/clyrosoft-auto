@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
 
 type Status = 'all' | 'paying' | 'demo' | 'inactive'
 
