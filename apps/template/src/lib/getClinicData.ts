@@ -362,6 +362,39 @@ function normalizeProfession(raw: string): string {
   return raw.toLowerCase().replace(/_/g, ' ').trim()
 }
 
+// Stock photos per profession for clinics that have no photos scraped yet
+const STOCK_PHOTOS: Record<string, string[]> = {
+  dental: [
+    'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&h=600&fit=crop',
+  ],
+  eye: [
+    'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1588776814546-1ffbb172d936?w=800&h=600&fit=crop',
+  ],
+  skin: [
+    'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1552693673-1bf958298935?w=800&h=600&fit=crop',
+  ],
+  default: [
+    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1504439468489-c8920d796a29?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1516549655669-df64a39e90c7?w=800&h=600&fit=crop',
+  ],
+}
+
+function withFallbackPhotos(clinic: Client): Client {
+  if (clinic.photos && clinic.photos.length > 0) return clinic
+  const key = normalizeProfession(clinic.profession_type ?? '')
+  const photos = STOCK_PHOTOS[key] ?? STOCK_PHOTOS.default
+  return { ...clinic, photos }
+}
+
 export const getClinicBySubdomain = cache(async (subdomain: string): Promise<Client | null> => {
   if (!supabase) return MOCK_CLINIC
   const { data, error } = await supabase
@@ -370,7 +403,7 @@ export const getClinicBySubdomain = cache(async (subdomain: string): Promise<Cli
     .eq('subdomain', subdomain)
     .single()
   if (error) return null
-  return data ?? null
+  return data ? withFallbackPhotos(data) : null
 })
 
 export const getProfessionConfig = cache(async (profession: string): Promise<ProfessionConfig> => {
