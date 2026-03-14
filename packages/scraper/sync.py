@@ -40,10 +40,48 @@ def _base() -> str:
 
 PROFESSION_MAP = {
     "dental": "dental",
+    "dentist": "dental",
+    "orthodont": "dental",
     "eye": "eye",
+    "ophthalmol": "eye",
+    "optometri": "eye",
     "physiotherapy": "physio",
+    "physio": "physio",
     "skin": "skin",
+    "dermatol": "skin",
+    "cosmetol": "skin",
     "child": "general",
+    "pediatric": "general",
+    "ent": "ent",
+    "cardiol": "cardiology",
+    "heart": "cardiology",
+    "neurol": "neurology",
+    "brain": "neurology",
+    "orthop": "orthopedic",
+    "bone": "orthopedic",
+    "spine": "orthopedic",
+    "psychiatr": "psychiatry",
+    "mental": "psychiatry",
+    "ayurved": "ayurveda",
+    "fertility": "fertility",
+    "ivf": "fertility",
+    "gynecol": "gynecology",
+    "obstet": "gynecology",
+    "gastro": "gastro",
+    "oncol": "oncology",
+    "cancer": "oncology",
+    "urol": "urology",
+    "kidney": "nephrology",
+    "nephr": "nephrology",
+    "pulmonol": "pulmonology",
+    "lung": "pulmonology",
+    "endocrin": "endocrinology",
+    "diabetol": "endocrinology",
+    "homeopath": "homeopathy",
+    "naturopath": "naturopathy",
+    "hair transplant": "hair-transplant",
+    "veterinar": "veterinary",
+    "animal": "veterinary",
 }
 
 def profession_from_query(query: str) -> str:
@@ -98,18 +136,39 @@ def _create_demo_client(data: dict, existing_subdomains: set) -> None:
 
     profession = profession_from_query(data.get("query", ""))
 
+    # Convert scraped testimonials {name, text, rating} → DB format {name, text, treatment}
+    raw_testimonials = data.get("testimonials") or []
+    db_testimonials = [
+        {
+            "name": t.get("name", "Patient"),
+            "text": t.get("text", ""),
+            "treatment": "",   # not available from Maps; left blank for now
+        }
+        for t in raw_testimonials
+        if t.get("text")
+    ]
+
     client_row = {
         "clinic_name": clinic_name,
         "doctor_name": data.get("doctor_name", "Doctor"),
         "phone": data.get("phone", ""),
-        "email": None,
+        "email": data.get("email") or None,
         "area": data.get("area", ""),
         "city": data.get("city", ""),
         "subdomain": subdomain,
         "profession_type": profession,
         "status": "demo",
         "monthly_amount": 499,
+        # Rich template fields
         "photos": data.get("photos") or [],
+        "tagline": data.get("tagline") or "",
+        "doctor_bio": data.get("doctor_bio") or "",
+        "services": data.get("services") or [],
+        "testimonials": db_testimonials or [],
+        "google_maps_link": data.get("google_maps_url") or "",
+        # New fields
+        "full_address": data.get("full_address") or "",
+        "opening_hours": data.get("opening_hours") or [],
     }
 
     try:
@@ -165,6 +224,8 @@ def sync_leads(leads: list, dry_run: bool = False) -> dict:
             "doctor_name": data.get("doctor_name", "Doctor"),
             "phone": phone,
             "city": data.get("city", ""),
+            "area": data.get("area") or "",
+            "email": data.get("email") or None,
             "photos": data.get("photos") or [],
         }
 

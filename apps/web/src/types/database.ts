@@ -21,6 +21,7 @@ export interface Client {
   cta_text?: string | null
   google_maps_link?: string | null
   photos?: string[] | null
+  doctors?: Array<{ name: string; qualification: string; bio: string; photo: string }> | null
   services?: string[] | null
   testimonials?: Array<{ name: string; text: string; treatment: string }> | null
 }

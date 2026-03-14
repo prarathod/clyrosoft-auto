@@ -27,3 +27,16 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Dashboard section highlight — triggered via postMessage */
+.section-highlight {
+  outline: 3px solid #FBBF24 !important;
+  outline-offset: 2px;
+  animation: section-pulse 1.2s ease-out forwards;
+}
+
+@keyframes section-pulse {
+  0%   { outline-color: #FBBF24; outline-width: 3px; }
+  60%  { outline-color: #F59E0B; outline-width: 4px; }
+  100% { outline-color: transparent; outline-width: 0; }
+}

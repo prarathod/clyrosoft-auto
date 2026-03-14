@@ -86,7 +86,7 @@ const FEATURES = [
   { icon: '📅', title: 'Appointment Form',     desc: 'Simple form that captures patient details'           },
   { icon: '📍', title: 'Google Maps',          desc: 'Patients find and navigate to your clinic easily'    },
   { icon: '📱', title: 'Mobile Responsive',    desc: 'Looks perfect on every phone and screen size'        },
-  { icon: '🎨', title: '3 Premium Themes',     desc: 'Classic, Modern, or Minimal — you choose'           },
+  { icon: '🎨', title: '6 Premium Templates',   desc: 'Classic, Modern, Minimal, Vitality, Elegant, Warm'  },
   { icon: '⚙️', title: 'Dashboard Control',    desc: 'Update content, theme, and services yourself'       },
   { icon: '🔒', title: 'SSL Certificate',      desc: 'Secure HTTPS included — no extra cost'              },
   { icon: '🔄', title: 'Monthly Updates',      desc: 'We keep your site running and up to date'           },
@@ -145,6 +145,76 @@ const FAQS = [
   },
 ]
 
+// ─── Template showcase data ───────────────────────────────────────────────────
+const TEMPLATES = [
+  {
+    key: 'classic',
+    label: 'Classic',
+    desc: 'Blue · Serif · Centered',
+    color: '#2563EB',
+    heroBg: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)',
+    heroText: '#FFFFFF',
+    heroSubtext: 'rgba(255,255,255,0.75)',
+    fontHeading: 'Georgia, serif',
+    tagline: '"Your Smile, Our Priority"',
+  },
+  {
+    key: 'modern',
+    label: 'Modern',
+    desc: 'Dark · Bold · Split layout',
+    color: '#8B5CF6',
+    heroBg: 'linear-gradient(135deg, #1E1B4B 0%, #7C3AED 100%)',
+    heroText: '#FFFFFF',
+    heroSubtext: 'rgba(255,255,255,0.65)',
+    fontHeading: 'system-ui, sans-serif',
+    tagline: 'Your Smile, Our Priority',
+  },
+  {
+    key: 'minimal',
+    label: 'Minimal',
+    desc: 'Black & White · Ultra-clean',
+    color: '#18181B',
+    heroBg: '#FAFAFA',
+    heroText: '#09090B',
+    heroSubtext: '#71717A',
+    fontHeading: 'system-ui, sans-serif',
+    tagline: 'Your Smile, Our Priority',
+  },
+  {
+    key: 'vitality',
+    label: 'Vitality',
+    desc: 'Green · Fresh · Health',
+    color: '#059669',
+    heroBg: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+    heroText: '#111827',
+    heroSubtext: '#6B7280',
+    fontHeading: 'system-ui, sans-serif',
+    tagline: 'Your Smile, Our Priority',
+  },
+  {
+    key: 'elegant',
+    label: 'Elegant',
+    desc: 'Navy · Gold · Luxury',
+    color: '#B45309',
+    heroBg: 'linear-gradient(160deg, #0F172A 0%, #1E293B 100%)',
+    heroText: '#FEF3C7',
+    heroSubtext: 'rgba(254,243,199,0.65)',
+    fontHeading: 'Georgia, serif',
+    tagline: '"Your Smile, Our Priority"',
+  },
+  {
+    key: 'warm',
+    label: 'Warm',
+    desc: 'Coral · Friendly · Rounded',
+    color: '#E11D48',
+    heroBg: 'linear-gradient(135deg, #FF6B6B 0%, #9F1239 100%)',
+    heroText: '#FFFFFF',
+    heroSubtext: 'rgba(255,255,255,0.80)',
+    fontHeading: 'system-ui, sans-serif',
+    tagline: 'Your Smile, Our Priority',
+  },
+]
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -174,12 +244,10 @@ export default function LandingPage() {
                 🚀 Get Free Demo
               </a>
               <a
-                href="http://localhost:3000/sharma"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="#templates"
                 className="inline-flex items-center gap-2 border border-gray-300 hover:border-blue-400 text-gray-700 hover:text-blue-600 font-semibold px-7 py-4 rounded-xl text-sm transition-colors"
               >
-                👁️ View Sample Site
+                👁️ View Sample Sites
               </a>
             </div>
             <div className="flex flex-wrap gap-6 mt-8 text-sm text-gray-500">
@@ -224,6 +292,62 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── TEMPLATES SHOWCASE ───────────────────────────────────────────── */}
+      <section id="templates" className="py-20 px-4 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-xs uppercase tracking-widest text-blue-600 font-semibold mb-2">Choose Your Style</p>
+            <h2 className="text-3xl font-black text-gray-900">6 Professional Templates</h2>
+            <p className="text-gray-500 mt-3 text-sm">Every clinic gets a full website. Pick the look that fits you best — switch anytime.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {TEMPLATES.map((t) => (
+              <a
+                key={t.key}
+                href={`${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'}/demo`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block rounded-2xl overflow-hidden border border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all bg-white"
+              >
+                {/* Mini preview */}
+                <div className="h-36 flex flex-col justify-end p-4 relative overflow-hidden" style={{ background: t.heroBg }}>
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white translate-x-1/2 -translate-y-1/2" />
+                  </div>
+                  <div className="relative">
+                    <p className="text-xs font-semibold mb-0.5 opacity-70" style={{ color: t.heroSubtext, fontFamily: t.fontHeading }}>Dental Clinic · Bangalore</p>
+                    <p className="font-bold text-base leading-tight" style={{ color: t.heroText, fontFamily: t.fontHeading }}>Sharma Dental Clinic</p>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: t.heroSubtext }}>{t.tagline}</p>
+                  </div>
+                </div>
+                {/* Label */}
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: t.color }} />
+                    <div>
+                      <p className="font-bold text-sm text-gray-900">{t.label}</p>
+                      <p className="text-xs text-gray-400">{t.desc}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-blue-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Preview →</span>
+                </div>
+              </a>
+            ))}
+          </div>
+          <p className="text-center text-xs text-gray-400 mt-6">
+            Click any template to see a live demo site →{' '}
+            <a
+              href={`${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'}/demo`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
+            >
+              Use the "Template" button (bottom-left) to switch between all 6
+            </a>
+          </p>
+        </div>
+      </section>
+
       {/* ── FEATURES ─────────────────────────────────────────────────────── */}
       <section id="features" className="py-20 px-4 bg-gray-50">
         <div className="max-w-5xl mx-auto">
@@ -264,7 +388,7 @@ export default function LandingPage() {
                   'WhatsApp booking button',
                   'Google Maps integration',
                   'Appointment booking form',
-                  '3 premium themes to choose from',
+                  '6 premium templates to choose from',
                   'Personal dashboard to manage everything',
                   'SSL certificate (HTTPS)',
                   'Mobile responsive design',

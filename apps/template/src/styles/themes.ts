@@ -1,5 +1,5 @@
-export type ThemeKey = 'classic' | 'modern' | 'minimal'
-export type HeroLayout = 'centered' | 'split' | 'minimal'
+export type ThemeKey = 'classic' | 'modern' | 'minimal' | 'vitality' | 'elegant' | 'warm'
+export type HeroLayout = 'centered' | 'split' | 'minimal' | 'vitality' | 'elegant' | 'warm'
 
 export interface Theme {
   key: ThemeKey
@@ -27,6 +27,8 @@ export interface Theme {
 }
 
 export const themes: Record<ThemeKey, Theme> = {
+  // ── Template 1: Classic ─────────────────────────────────────────────────────
+  // Blue, serif heading, centered hero — trusted & traditional medical feel
   classic: {
     key: 'classic',
     label: 'Classic',
@@ -44,13 +46,15 @@ export const themes: Record<ThemeKey, Theme> = {
       fontHeading: "'Playfair Display', Georgia, 'Times New Roman', serif",
       fontBody: "'Inter', system-ui, -apple-system, sans-serif",
       radius: '0.75rem',
-      heroBg: '#2563EB',
+      heroBg: 'linear-gradient(135deg, #1D4ED8 0%, #2563EB 60%, #3B82F6 100%)',
       heroText: '#FFFFFF',
       heroSubtext: 'rgba(255,255,255,0.80)',
       heroAccent: 'rgba(255,255,255,0.18)',
     },
   },
 
+  // ── Template 2: Modern ──────────────────────────────────────────────────────
+  // Dark purple, split layout, bold sans-serif — tech-forward urban clinic
   modern: {
     key: 'modern',
     label: 'Modern',
@@ -75,6 +79,8 @@ export const themes: Record<ThemeKey, Theme> = {
     },
   },
 
+  // ── Template 3: Minimal ─────────────────────────────────────────────────────
+  // Black & white, ultra-clean typography — premium minimalist
   minimal: {
     key: 'minimal',
     label: 'Minimal',
@@ -96,6 +102,84 @@ export const themes: Record<ThemeKey, Theme> = {
       heroText: '#09090B',
       heroSubtext: '#71717A',
       heroAccent: '#E4E4E7',
+    },
+  },
+
+  // ── Template 4: Vitality ────────────────────────────────────────────────────
+  // Fresh emerald green, white bg, split with stats — health & wellness feel
+  vitality: {
+    key: 'vitality',
+    label: 'Vitality',
+    heroLayout: 'vitality',
+    vars: {
+      primary: '#059669',
+      bg: '#FFFFFF',
+      text: '#111827',
+      textMuted: '#6B7280',
+      cardBg: '#FFFFFF',
+      cardBorder: '#D1FAE5',
+      sectionAlt: '#F0FDF4',
+      footerBg: '#064E3B',
+      footerText: '#6EE7B7',
+      fontHeading: "'Inter', system-ui, sans-serif",
+      fontBody: "'Inter', system-ui, sans-serif",
+      radius: '0.875rem',
+      heroBg: '#FFFFFF',
+      heroText: '#111827',
+      heroSubtext: '#6B7280',
+      heroAccent: '#D1FAE5',
+    },
+  },
+
+  // ── Template 5: Elegant ─────────────────────────────────────────────────────
+  // Deep navy + gold, luxury serif — premium specialist / senior clinics
+  elegant: {
+    key: 'elegant',
+    label: 'Elegant',
+    heroLayout: 'elegant',
+    vars: {
+      primary: '#B45309',
+      bg: '#FFFBF5',
+      text: '#1C1917',
+      textMuted: '#78716C',
+      cardBg: '#FFFFFF',
+      cardBorder: '#E7E5E4',
+      sectionAlt: '#FEF3C7',
+      footerBg: '#1C1917',
+      footerText: '#A8A29E',
+      fontHeading: "'Playfair Display', Georgia, serif",
+      fontBody: "'Inter', system-ui, sans-serif",
+      radius: '0.5rem',
+      heroBg: 'linear-gradient(160deg, #0F172A 0%, #1E293B 50%, #0F2044 100%)',
+      heroText: '#FEF3C7',
+      heroSubtext: 'rgba(254,243,199,0.70)',
+      heroAccent: 'rgba(180,83,9,0.40)',
+    },
+  },
+
+  // ── Template 6: Warm ────────────────────────────────────────────────────────
+  // Coral/rose warm gradient, pill badges, rounded — family & friendly clinics
+  warm: {
+    key: 'warm',
+    label: 'Warm',
+    heroLayout: 'warm',
+    vars: {
+      primary: '#E11D48',
+      bg: '#FFFFFF',
+      text: '#1F2937',
+      textMuted: '#6B7280',
+      cardBg: '#FFFFFF',
+      cardBorder: '#FCE7F3',
+      sectionAlt: '#FFF1F2',
+      footerBg: '#881337',
+      footerText: '#FECDD3',
+      fontHeading: "'Inter', system-ui, sans-serif",
+      fontBody: "'Inter', system-ui, sans-serif",
+      radius: '9999px',
+      heroBg: 'linear-gradient(135deg, #FF6B6B 0%, #E11D48 40%, #9F1239 100%)',
+      heroText: '#FFFFFF',
+      heroSubtext: 'rgba(255,255,255,0.85)',
+      heroAccent: 'rgba(255,255,255,0.20)',
     },
   },
 }

@@ -5,9 +5,12 @@ import { themes, type ThemeKey } from '@/styles/themes'
 import { useTheme } from './ThemeProvider'
 
 const THEME_META: Record<ThemeKey, { label: string; swatch: string; desc: string }> = {
-  classic: { label: 'Classic', swatch: '#2563EB', desc: 'Traditional · Blue · Serif' },
-  modern:  { label: 'Modern',  swatch: '#8B5CF6', desc: 'Dark · Gradient · Bold'     },
-  minimal: { label: 'Minimal', swatch: '#18181B', desc: 'Clean · White · Minimal'    },
+  classic:  { label: 'Classic',  swatch: '#2563EB', desc: 'Blue · Serif · Centered'   },
+  modern:   { label: 'Modern',   swatch: '#8B5CF6', desc: 'Dark · Bold · Split'        },
+  minimal:  { label: 'Minimal',  swatch: '#18181B', desc: 'Black & White · Ultra-clean' },
+  vitality: { label: 'Vitality', swatch: '#059669', desc: 'Green · Fresh · Health'     },
+  elegant:  { label: 'Elegant',  swatch: '#B45309', desc: 'Navy · Gold · Luxury'       },
+  warm:     { label: 'Warm',     swatch: '#E11D48', desc: 'Coral · Friendly · Rounded' },
 }
 
 export default function ThemeSwitcher() {
@@ -19,14 +22,14 @@ export default function ThemeSwitcher() {
     <div className="fixed bottom-6 left-6 z-50 flex flex-col-reverse items-start gap-2">
       {open && (
         <div
-          className="mb-2 rounded-2xl shadow-2xl border overflow-hidden w-52"
+          className="mb-2 rounded-2xl shadow-2xl border overflow-hidden w-56"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
         >
           <div
             className="px-4 py-2.5 border-b text-xs font-semibold uppercase tracking-wider"
             style={{ borderColor: 'var(--card-border)', color: 'var(--text-muted)' }}
           >
-            Theme
+            Choose Template
           </div>
           {(Object.keys(themes) as ThemeKey[]).map((key) => {
             const meta = THEME_META[key]
@@ -42,20 +45,20 @@ export default function ThemeSwitcher() {
                 }}
               >
                 <span
-                  className="w-4 h-4 rounded-full flex-shrink-0"
+                  className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
                   style={{ backgroundColor: meta.swatch }}
                 />
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
                     {meta.label}
                   </p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
                     {meta.desc}
                   </p>
                 </div>
                 {isActive && (
                   <svg
-                    className="ml-auto w-4 h-4 flex-shrink-0"
+                    className="w-4 h-4 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -78,10 +81,10 @@ export default function ThemeSwitcher() {
           borderColor: 'var(--card-border)',
           color: 'var(--text)',
         }}
-        title="Change theme"
+        title="Change template"
       >
         <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: THEME_META[current].swatch }} />
-        <span>Theme</span>
+        <span>Template</span>
         <svg
           className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`}
           fill="none"

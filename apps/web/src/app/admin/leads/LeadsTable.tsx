@@ -12,11 +12,97 @@ interface Lead {
   city: string
   created_at: string
   contacted?: boolean
+  demo_url?: string | null
+}
+
+const CLINIQO_URL = process.env.NEXT_PUBLIC_TEMPLATE_URL || 'https://cliniqo.in'
+
+// Plain-text message for clipboard (emoji via String.fromCodePoint, runs in browser onClick)
+function buildPlainMessage(
+  doctorName: string,
+  clinicName: string,
+  city: string,
+  demoUrl?: string | null,
+): string {
+  const wave   = String.fromCodePoint(0x1F44B)
+  const check  = String.fromCodePoint(0x2705)
+  const pray   = String.fromCodePoint(0x1F64F)
+  const right  = String.fromCodePoint(0x1F449)
+  const target = String.fromCodePoint(0x1F3AF)
+  const party  = String.fromCodePoint(0x1F389)
+  const star   = String.fromCodePoint(0x2B50)
+
+  const siteLink = demoUrl ?? `${CLINIQO_URL}/demo`
+  const demoLine = demoUrl
+    ? `*We already built a FREE demo for your clinic!*`
+    : `*We'll build a FREE demo for your clinic first!*`
+
+  return `Hi Dr. ${doctorName}! ${wave}
+
+I'm from *Cliniqo* — we build professional websites for clinics & doctors across India.
+
+I found *${clinicName}*${city ? ` in ${city}` : ''} on Google Maps but no website. Patients search online before visiting — a website means more bookings!
+
+${party} ${demoLine}
+
+${right} *${siteLink}*
+
+${check} Mobile-friendly & fast
+${check} WhatsApp booking button
+${check} Services, gallery & doctor profile
+${check} 6+ professional designs to pick from
+
+${star} *Just \u20B9499/month.* No setup fee. Cancel anytime. ${target}
+
+View the demo, pick your favourite design — no payment needed upfront!
+
+Reply *YES*! ${pray}`
+}
+
+// Pre-encoded emoji for WA URL (bypasses wa.me redirect corruption)
+const E = {
+  wave:   '%F0%9F%91%8B',
+  check:  '%E2%9C%85',
+  pray:   '%F0%9F%99%8F',
+  right:  '%F0%9F%91%89',
+  target: '%F0%9F%8E%AF',
+  party:  '%F0%9F%8E%89',
+  star:   '%E2%AD%90',
+}
+
+function buildWAUrl(
+  phone: string,
+  doctorName: string,
+  clinicName: string,
+  city: string,
+  demoUrl?: string | null,
+): string {
+  const enc = encodeURIComponent
+  const siteLink = demoUrl ?? `${CLINIQO_URL}/demo`
+  const demoLine = demoUrl
+    ? enc('*We already built a FREE demo for your clinic!*')
+    : enc("*We'll build a FREE demo for your clinic first!*")
+
+  const text = (
+    enc(`Hi Dr. ${doctorName}! `) + E.wave +
+    enc("\n\nI'm from *Cliniqo* — we build professional websites for clinics & doctors across India.") +
+    enc(`\n\nI found *${clinicName}*${city ? ` in ${city}` : ''} on Google Maps but no website. Patients search online before visiting — a website means more bookings!\n\n`) +
+    E.party + enc(' ') + demoLine +
+    enc('\n\n') + E.right + enc(` *${siteLink}*\n\n`) +
+    E.check + enc(' Mobile-friendly & fast\n') +
+    E.check + enc(' WhatsApp booking button\n') +
+    E.check + enc(' Services, gallery & doctor profile\n') +
+    E.check + enc(' 6+ professional designs to pick from\n') +
+    enc('\n') + E.star + enc(' *Just \u20B9499/month.* No setup fee. Cancel anytime. ') + E.target +
+    enc('\n\nView the demo, pick your favourite design — no payment needed upfront!\n\nReply *YES*! ') + E.pray
+  )
+  return `https://api.whatsapp.com/send?phone=91${phone}&text=${text}`
 }
 
 export default function LeadsTable({ leads }: { leads: Lead[] }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [copied, setCopied] = useState<string | null>(null)
 
   async function markContacted(id: string) {
     const supabase = createClient()
@@ -31,6 +117,13 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
     await supabase.from('leads').delete().eq('id', id)
     router.refresh()
     setDeleting(null)
+  }
+
+  async function copyMessage(lead: Lead) {
+    const msg = buildPlainMessage(lead.doctor_name, lead.clinic_name, lead.city, lead.demo_url)
+    await navigator.clipboard.writeText(msg)
+    setCopied(lead.id)
+    setTimeout(() => setCopied(null), 2000)
   }
 
   if (leads.length === 0) {
@@ -65,18 +158,33 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                   {new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${lead.contacted ? 'bg-green-900 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
-                    {lead.contacted ? 'Contacted' : 'New'}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${lead.contacted ? 'bg-green-900 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
+                      {lead.contacted ? 'Contacted' : 'New'}
+                    </span>
+                    {lead.demo_url && (
+                      <span className="text-xs px-2 py-0.5 rounded-full w-fit bg-blue-900 text-blue-400">Demo ready</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <a
-                      href={`/admin/demo-generator?name=${encodeURIComponent(lead.clinic_name)}&doctor=${encodeURIComponent(lead.doctor_name)}&phone=${lead.phone}&city=${encodeURIComponent(lead.city)}`}
+                      href={`/admin/demo-generator?lead_id=${lead.id}&name=${encodeURIComponent(lead.clinic_name)}&doctor=${encodeURIComponent(lead.doctor_name)}&phone=${lead.phone}&city=${encodeURIComponent(lead.city)}`}
                       className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg transition-colors"
                     >
-                      ⚡ Demo
+                      {lead.demo_url ? '⚡ Re-demo' : '⚡ Demo'}
                     </a>
+                    {lead.demo_url && (
+                      <a
+                        href={lead.demo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-2.5 py-1 rounded-lg transition-colors"
+                      >
+                        ↗ View
+                      </a>
+                    )}
                     <button
                       onClick={() => markContacted(lead.id)}
                       disabled={lead.contacted}
@@ -85,13 +193,20 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                       ✓ Mark
                     </button>
                     <a
-                      href={`https://wa.me/91${lead.phone}?text=${encodeURIComponent(`Hi Dr. ${lead.doctor_name}, I'm from Cliniqo. We've built a free demo website for ${lead.clinic_name}!`)}`}
+                      href={buildWAUrl(lead.phone, lead.doctor_name, lead.clinic_name, lead.city, lead.demo_url)}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => markContacted(lead.id)}
                       className="text-xs bg-emerald-900 hover:bg-emerald-800 text-emerald-400 px-2.5 py-1 rounded-lg transition-colors"
                     >
                       💬 WA
                     </a>
+                    <button
+                      onClick={() => copyMessage(lead)}
+                      className="text-xs bg-yellow-900 hover:bg-yellow-800 text-yellow-400 px-2.5 py-1 rounded-lg transition-colors"
+                    >
+                      {copied === lead.id ? '✓ Copied!' : '📋 Copy'}
+                    </button>
                     <button
                       onClick={() => deleteLead(lead.id)}
                       disabled={deleting === lead.id}

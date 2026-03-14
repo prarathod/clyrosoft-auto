@@ -34,20 +34,32 @@ export default async function ClinicPage({ params }: Props) {
 
   return (
     <main>
-      <HeroSection clinic={clinic} config={config} />
-      <ServicesSection services={services} primaryColor={config.primary_color} />
-      <GallerySection photos={clinic.photos ?? []} clinicName={clinic.clinic_name} />
-      <Testimonials
-        doctorName={clinic.doctor_name}
-        clinicName={clinic.clinic_name}
-        testimonials={testimonials}
-      />
-      <BookingSection
-        subdomain={params.subdomain}
-        services={services}
-        phone={clinic.phone}
-      />
-      <WhatsAppCTA phone={clinic.phone} doctorName={clinic.doctor_name} />
+      <div data-section="hero">
+        <HeroSection clinic={clinic} config={config} />
+      </div>
+      <div data-section="services">
+        <ServicesSection services={services} primaryColor={config.primary_color} />
+      </div>
+      <div data-section="gallery">
+        <GallerySection photos={clinic.photos ?? []} clinicName={clinic.clinic_name} />
+      </div>
+      <div data-section="testimonials">
+        <Testimonials
+          doctorName={clinic.doctor_name}
+          clinicName={clinic.clinic_name}
+          testimonials={testimonials}
+        />
+      </div>
+      <div data-section="booking">
+        <BookingSection
+          subdomain={params.subdomain}
+          services={services}
+          phone={clinic.phone}
+        />
+      </div>
+      <div data-section="contact">
+        <WhatsAppCTA phone={clinic.phone} doctorName={clinic.doctor_name} />
+      </div>
     </main>
   )
 }

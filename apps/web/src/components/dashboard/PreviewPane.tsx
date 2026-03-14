@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 interface Props {
   subdomain: string
   refreshKey: number
+  highlightSection?: string  // section id to scroll+highlight via postMessage
 }
 
 const TEMPLATE_URL = process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'
@@ -17,7 +18,7 @@ const DEVICES: { key: Device; label: string; icon: string; width: string }[] = [
   { key: 'desktop', label: 'Desktop', icon: '🖥',  width: '100%' },
 ]
 
-export default function PreviewPane({ subdomain, refreshKey }: Props) {
+export default function PreviewPane({ subdomain, refreshKey, highlightSection }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [device, setDevice] = useState<Device>('desktop')
   const url = `${TEMPLATE_URL}/${subdomain}`
@@ -27,6 +28,17 @@ export default function PreviewPane({ subdomain, refreshKey }: Props) {
       iframeRef.current.src = url
     }
   }, [refreshKey, url])
+
+  // Send highlight message to iframe when activeSection changes
+  useEffect(() => {
+    if (!highlightSection) return
+    const iframe = iframeRef.current
+    if (!iframe?.contentWindow) return
+    iframe.contentWindow.postMessage(
+      { type: 'HIGHLIGHT_SECTION', section: highlightSection },
+      '*'
+    )
+  }, [highlightSection])
 
   const selected = DEVICES.find((d) => d.key === device)!
 

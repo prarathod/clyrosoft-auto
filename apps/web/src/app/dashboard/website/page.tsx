@@ -6,69 +6,141 @@ import dynamic from 'next/dynamic'
 
 const PreviewPane = dynamic(() => import('@/components/dashboard/PreviewPane'), { ssr: false })
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface Testimonial { name: string; text: string; treatment: string }
+interface Doctor { name: string; qualification: string; bio: string; photo: string }
+
+// Themes that show a photo on the right side of the hero
+const HERO_PHOTO_THEMES = new Set(['modern', 'vitality'])
+
+// ── Theme options ─────────────────────────────────────────────────────────────
 const THEMES = [
-  {
-    key: 'classic',
-    label: 'Classic',
-    desc: 'Traditional · Blue · Serif font',
-    color: '#2563EB',
-    preview: { bg: '#2563EB', text: 'white' },
-  },
-  {
-    key: 'modern',
-    label: 'Modern',
-    desc: 'Dark · Gradient · Bold',
-    color: '#8B5CF6',
-    preview: { bg: 'linear-gradient(135deg, #1E1B4B, #7C3AED)', text: 'white' },
-  },
-  {
-    key: 'minimal',
-    label: 'Minimal',
-    desc: 'Clean · White · Minimal',
-    color: '#18181B',
-    preview: { bg: '#FAFAFA', text: '#09090B' },
-  },
+  { key: 'classic',  label: 'Classic',  desc: 'Blue · Serif · Centered',    color: '#2563EB', heroBg: 'linear-gradient(135deg,#1D4ED8,#3B82F6)', heroText: 'white' },
+  { key: 'modern',   label: 'Modern',   desc: 'Dark · Bold · Split',         color: '#8B5CF6', heroBg: 'linear-gradient(135deg,#1E1B4B,#7C3AED)', heroText: 'white' },
+  { key: 'minimal',  label: 'Minimal',  desc: 'Black & White · Clean',       color: '#18181B', heroBg: '#FAFAFA',                                 heroText: '#09090B' },
+  { key: 'vitality', label: 'Vitality', desc: 'Green · Fresh · Health',      color: '#059669', heroBg: 'linear-gradient(135deg,#D1FAE5,#ECFDF5)', heroText: '#111827' },
+  { key: 'elegant',  label: 'Elegant',  desc: 'Navy · Gold · Luxury',        color: '#B45309', heroBg: 'linear-gradient(160deg,#0F172A,#1E293B)', heroText: '#FEF3C7' },
+  { key: 'warm',     label: 'Warm',     desc: 'Coral · Friendly · Rounded',  color: '#E11D48', heroBg: 'linear-gradient(135deg,#FF6B6B,#9F1239)', heroText: 'white' },
 ]
 
-function SectionTag({ label }: { label: string }) {
+// ── Section definitions ───────────────────────────────────────────────────────
+const SECTIONS = [
+  { id: 'template',     icon: '🎨', label: 'Template',     hint: 'Overall colour & layout style' },
+  { id: 'hero',         icon: '🦸', label: 'Hero',         hint: 'Top banner — tagline & buttons' },
+  { id: 'about',        icon: '👨‍⚕️', label: 'About / Doctors', hint: 'Doctor profiles & clinic story' },
+  { id: 'photos',       icon: '🖼️', label: 'Photos',       hint: 'Clinic photos shown in gallery' },
+  { id: 'services',     icon: '🏥', label: 'Services',     hint: 'List of treatments you offer' },
+  { id: 'testimonials', icon: '⭐', label: 'Testimonials', hint: 'Patient reviews' },
+  { id: 'booking',      icon: '📅', label: 'Booking',      hint: 'Appointment form' },
+  { id: 'contact',      icon: '📞', label: 'Contact',      hint: 'Phone & Google Maps link' },
+  { id: 'footer',       icon: '🦶', label: 'Footer',       hint: 'Bottom of the website' },
+]
+
+// ── Accordion section wrapper ─────────────────────────────────────────────────
+function AccordionSection({
+  id, icon, label, hint, open, onOpen, children,
+}: {
+  id: string; icon: string; label: string; hint: string
+  open: boolean; onOpen: (id: string) => void; children: React.ReactNode
+}) {
   return (
-    <span className="ml-2 text-xs font-normal text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">
-      {label}
-    </span>
+    <div
+      className={`border rounded-xl overflow-hidden transition-all ${
+        open ? 'border-blue-400 shadow-sm' : 'border-gray-200'
+      }`}
+      style={{ backgroundColor: open ? '#F8FAFF' : 'white' }}
+    >
+      <button
+        className="w-full flex items-center gap-3 px-5 py-4 text-left"
+        onClick={() => onOpen(id)}
+      >
+        <span className="text-xl">{icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm text-gray-900">{label}</p>
+          <p className="text-xs text-gray-400 truncate">{hint}</p>
+        </div>
+        <svg
+          className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="px-5 pb-5 border-t border-blue-100">
+          <div className="pt-4">{children}</div>
+        </div>
+      )}
+    </div>
   )
 }
 
+const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function WebsitePage() {
-  const [clinicId, setClinicId] = useState('')
-  const [subdomain, setSubdomain] = useState('')
-  const [theme, setTheme] = useState('classic')
-  const [tagline, setTagline] = useState('')
-  const [doctorBio, setDoctorBio] = useState('')
-  const [ctaText, setCtaText] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [previewKey, setPreviewKey] = useState(0)
+  const [clinicId,       setClinicId]       = useState('')
+  const [subdomain,      setSubdomain]      = useState('')
+  const [theme,          setTheme]          = useState('classic')
+  const [tagline,        setTagline]        = useState('')
+  const [doctorBio,      setDoctorBio]      = useState('')
+  const [ctaText,        setCtaText]        = useState('')
+  const [services,       setServices]       = useState<string[]>([])
+  const [newService,     setNewService]     = useState('')
+  const [testimonials,   setTestimonials]   = useState<Testimonial[]>([])
+  const [phone,          setPhone]          = useState('')
+  const [googleMapsLink, setGoogleMapsLink] = useState('')
+  const [doctorName,     setDoctorName]     = useState('')
+  const [doctors,        setDoctors]        = useState<Doctor[]>([])
+  const [photos,         setPhotos]         = useState<string[]>([])
+  const [newPhotoUrl,    setNewPhotoUrl]    = useState('')
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [saving,         setSaving]         = useState(false)
+  const [saved,          setSaved]          = useState(false)
+  const [previewKey,     setPreviewKey]     = useState(0)
+  const [openSection,    setOpenSection]    = useState<string>('template')
+  const [highlightSec,   setHighlightSec]   = useState<string | undefined>()
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return
+      // Use * so query doesn't fail if optional columns (photos, contacted) don't exist yet
       supabase
         .from('clients')
-        .select('id, subdomain, theme, tagline, doctor_bio, cta_text')
+        .select('*')
         .eq('email', session.user.email!)
         .single()
-        .then(({ data }) => {
-          if (!data) return
+        .then(({ data, error }) => {
+          if (error || !data) return
           setClinicId(data.id)
           setSubdomain(data.subdomain)
           setTheme(data.theme ?? 'classic')
           setTagline(data.tagline ?? '')
           setDoctorBio(data.doctor_bio ?? '')
           setCtaText(data.cta_text ?? '')
+          setServices(Array.isArray(data.services) ? data.services : [])
+          setTestimonials(Array.isArray(data.testimonials) ? data.testimonials : [])
+          setPhone(data.phone ?? '')
+          setGoogleMapsLink(data.google_maps_link ?? '')
+          setPhotos(Array.isArray(data.photos) ? data.photos : [])
+          setDoctorName(data.doctor_name ?? '')
+          setDoctors(Array.isArray(data.doctors) ? data.doctors : [])
         })
     })
   }, [])
+
+  function handleSectionOpen(id: string) {
+    setOpenSection(id === openSection ? '' : id)
+    // Map section id → template section id (photos → gallery)
+    const sectionMap: Record<string, string> = { photos: 'gallery' }
+    const targetSection = sectionMap[id] ?? id
+    // Highlight only actual page sections (not 'template', 'booking')
+    if (id !== 'template' && id !== openSection) {
+      setHighlightSec(undefined)
+      setTimeout(() => setHighlightSec(targetSection), 50)
+    }
+  }
 
   async function handleSave() {
     if (!clinicId) return
@@ -76,7 +148,11 @@ export default function WebsitePage() {
     const supabase = createClient()
     await supabase
       .from('clients')
-      .update({ theme, tagline, doctor_bio: doctorBio, cta_text: ctaText })
+      .update({
+        theme, tagline, doctor_bio: doctorBio, cta_text: ctaText,
+        services, testimonials, phone, google_maps_link: googleMapsLink,
+        photos, doctor_name: doctorName, doctors,
+      })
       .eq('id', clinicId)
     setSaving(false)
     setSaved(true)
@@ -84,127 +160,565 @@ export default function WebsitePage() {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+  function addService() {
+    if (!newService.trim()) return
+    setServices([...services, newService.trim()])
+    setNewService('')
+  }
+  function removeService(i: number) { setServices(services.filter((_, idx) => idx !== i)) }
+  function addTestimonial() { setTestimonials([...testimonials, { name: '', text: '', treatment: '' }]) }
+  function updateTestimonial(i: number, field: keyof Testimonial, value: string) {
+    setTestimonials(testimonials.map((t, idx) => idx === i ? { ...t, [field]: value } : t))
+  }
+  function removeTestimonial(i: number) { setTestimonials(testimonials.filter((_, idx) => idx !== i)) }
+
+  function addPhotoByUrl() {
+    const url = newPhotoUrl.trim()
+    if (!url) return
+    setPhotos([...photos, url])
+    setNewPhotoUrl('')
+  }
+  function removePhoto(i: number) { setPhotos(photos.filter((_, idx) => idx !== i)) }
+  function movePhotoLeft(i: number) {
+    if (i === 0) return
+    const next = [...photos]
+    ;[next[i - 1], next[i]] = [next[i], next[i - 1]]
+    setPhotos(next)
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+    if (!cloudName || !uploadPreset) {
+      alert('Cloudinary is not configured yet. Ask admin to set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.')
+      return
+    }
+    setUploadingPhoto(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('upload_preset', uploadPreset)
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: form })
+      const data = await res.json()
+      if (data.secure_url) setPhotos((prev) => [...prev, data.secure_url])
+    } finally {
+      setUploadingPhoto(false)
+      e.target.value = ''
+    }
+  }
 
   return (
     <div className="flex gap-6 items-start min-h-0">
-      {/* ── Left: editor ── */}
-      <div className="w-[420px] flex-shrink-0 space-y-6">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Website Settings</h2>
-          <p className="text-sm text-gray-500">Save to apply changes to your live site.</p>
+
+      {/* ── Left: accordion editor ── */}
+      <div className="w-[420px] flex-shrink-0 space-y-3">
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-900 mb-1">Website Editor</h2>
+          <p className="text-sm text-gray-500">Click a section to edit it. Changes apply after saving.</p>
         </div>
 
-        {/* Theme picker */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h3 className="font-semibold text-gray-900 mb-1 flex items-center">
-            Theme
-            <SectionTag label="↑ Top bar colour" />
-          </h3>
-          <p className="text-xs text-gray-400 mb-4">Controls the overall colour scheme of your entire website</p>
-          <div className="grid grid-cols-3 gap-3">
-            {THEMES.map((t) => (
-              <div
-                key={t.key}
-                onClick={() => setTheme(t.key)}
-                className={`cursor-pointer rounded-xl border-2 overflow-hidden transition-all ${
-                  theme === t.key ? 'border-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div
-                  className="h-20 p-3 flex flex-col justify-end"
-                  style={{ background: t.preview.bg }}
-                >
-                  <div className="text-xs font-bold truncate" style={{ color: t.preview.text }}>
-                    Your Clinic
+        {SECTIONS.map(({ id, icon, label, hint }) => (
+          <AccordionSection
+            key={id}
+            id={id} icon={icon} label={label} hint={hint}
+            open={openSection === id}
+            onOpen={handleSectionOpen}
+          >
+
+            {/* ── TEMPLATE ── */}
+            {id === 'template' && (
+              <div className="grid grid-cols-3 gap-2">
+                {THEMES.map((t) => (
+                  <div
+                    key={t.key}
+                    onClick={() => setTheme(t.key)}
+                    className={`cursor-pointer rounded-xl border-2 overflow-hidden transition-all ${
+                      theme === t.key ? 'border-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="h-16 p-2 flex flex-col justify-end" style={{ background: t.heroBg }}>
+                      <div className="text-xs font-bold" style={{ color: t.heroText }}>Your Clinic</div>
+                    </div>
+                    <div className="p-2 bg-white">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                        <span className="font-semibold text-xs text-gray-900">{t.label}</span>
+                        {theme === t.key && <span className="ml-auto text-blue-500 text-xs">✓</span>}
+                      </div>
+                      <p className="text-xs text-gray-400">{t.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── HERO ── */}
+            {id === 'hero' && (
+              <div className="space-y-4">
+
+                {/* Hero photo — only for split-layout themes */}
+                {HERO_PHOTO_THEMES.has(theme) ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Hero Photo
+                    <span className="ml-2 text-xs font-normal text-gray-400">shown on right side of banner</span>
+                  </label>
+                  <div className="flex gap-3 items-start">
+                    {/* Current preview */}
+                    <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-200 flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                      {photos[0] ? (
+                        <img
+                          src={photos[0]}
+                          alt="Hero"
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <span className="text-3xl">🏥</span>
+                      )}
+                    </div>
+                    {/* Actions */}
+                    <div className="flex-1 space-y-2">
+                      {/* Upload from device */}
+                      <label className="flex items-center gap-2 cursor-pointer bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg px-3 py-2 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingPhoto}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+                            const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+                            if (!cloudName || !uploadPreset) {
+                              alert('Cloudinary not configured. Paste a URL below instead.')
+                              return
+                            }
+                            setUploadingPhoto(true)
+                            try {
+                              const form = new FormData()
+                              form.append('file', file)
+                              form.append('upload_preset', uploadPreset)
+                              const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: form })
+                              const data = await res.json()
+                              if (data.secure_url) {
+                                // Replace photos[0] with new upload
+                                setPhotos((prev) => [data.secure_url, ...prev.slice(1)])
+                              }
+                            } finally {
+                              setUploadingPhoto(false)
+                              e.target.value = ''
+                            }
+                          }}
+                        />
+                        {uploadingPhoto ? (
+                          <><span className="w-3.5 h-3.5 border-2 border-blue-400/30 border-t-blue-600 rounded-full animate-spin" /><span className="text-xs font-medium text-blue-600">Uploading…</span></>
+                        ) : (
+                          <><span className="text-base">📤</span><span className="text-xs font-medium text-gray-600">Upload from device</span></>
+                        )}
+                      </label>
+                      {/* Paste URL */}
+                      <div className="flex gap-1.5">
+                        <input
+                          type="url"
+                          placeholder="Or paste image URL…"
+                          className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const url = (e.target as HTMLInputElement).value.trim()
+                              if (url) {
+                                setPhotos((prev) => [url, ...prev.slice(1)])
+                                ;(e.target as HTMLInputElement).value = ''
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          className="bg-blue-600 text-white text-xs px-2.5 py-1.5 rounded-lg hover:bg-blue-700 flex-shrink-0"
+                          onClick={(e) => {
+                            const input = (e.currentTarget.previousSibling as HTMLInputElement)
+                            const url = input.value.trim()
+                            if (url) {
+                              setPhotos((prev) => [url, ...prev.slice(1)])
+                              input.value = ''
+                            }
+                          }}
+                        >
+                          Set
+                        </button>
+                      </div>
+                      {photos[0] && (
+                        <button
+                          onClick={() => setPhotos((prev) => prev.slice(1))}
+                          className="text-xs text-red-500 hover:underline"
+                        >
+                          Remove hero photo
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="p-2.5 bg-white">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: t.color }} />
-                    <span className="font-semibold text-xs text-gray-900">{t.label}</span>
-                    {theme === t.key && <span className="ml-auto text-blue-500 text-xs">✓</span>}
-                  </div>
-                  <p className="text-xs text-gray-400">{t.desc}</p>
+                ) : (
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-500">
+                  <span>ℹ️</span>
+                  <span>The <strong>{THEMES.find(t => t.key === theme)?.label}</strong> template uses a text-only hero — no photo shown. Switch to <strong>Modern</strong> or <strong>Vitality</strong> to add a hero image.</span>
+                </div>
+                )}
+
+                {/* Tagline */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
+                  <input
+                    type="text"
+                    value={tagline}
+                    onChange={(e) => setTagline(e.target.value)}
+                    placeholder="Your smile is our priority"
+                    className={inputClass}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Shows below the clinic name in the hero banner</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Book Button Text</label>
+                  <input
+                    type="text"
+                    value={ctaText}
+                    onChange={(e) => setCtaText(e.target.value)}
+                    placeholder="Book Appointment"
+                    className={inputClass}
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            )}
 
-        {/* Content fields */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
-          <h3 className="font-semibold text-gray-900">Page Content</h3>
+            {/* ── ABOUT / DOCTORS ── */}
+            {id === 'about' && (
+              <div className="space-y-5">
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Hero Tagline
-              <SectionTag label="↑ Hero — below clinic name" />
-            </label>
-            <input
-              type="text"
-              value={tagline}
-              onChange={(e) => setTagline(e.target.value)}
-              placeholder="Your Smile, Our Priority"
-              className={inputClass}
-            />
-          </div>
+                {/* Primary doctor */}
+                <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-gray-800">Primary Doctor</p>
+                    <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">Main</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      value={doctorName}
+                      onChange={(e) => setDoctorName(e.target.value)}
+                      placeholder="Dr. Ramesh Sharma"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Bio / Profile</label>
+                    <textarea
+                      value={doctorBio}
+                      onChange={(e) => setDoctorBio(e.target.value)}
+                      rows={3}
+                      placeholder="Dr. Sharma has 15 years of experience in cosmetic dentistry..."
+                      className={`${inputClass} resize-none`}
+                    />
+                  </div>
+                </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              CTA Button Text
-              <SectionTag label="↑ Hero — Book button" />
-            </label>
-            <input
-              type="text"
-              value={ctaText}
-              onChange={(e) => setCtaText(e.target.value)}
-              placeholder="Book Appointment"
-              className={inputClass}
-            />
-          </div>
+                {/* Additional doctors */}
+                {doctors.map((doc, i) => (
+                  <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-gray-800">Doctor {i + 2}</p>
+                      <button
+                        onClick={() => setDoctors(doctors.filter((_, idx) => idx !== i))}
+                        className="text-xs text-red-500 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Full Name</label>
+                      <input
+                        type="text"
+                        value={doc.name}
+                        onChange={(e) => setDoctors(doctors.map((d, idx) => idx === i ? { ...d, name: e.target.value } : d))}
+                        placeholder="Dr. Priya Nair"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Qualification / Specialization</label>
+                      <input
+                        type="text"
+                        value={doc.qualification}
+                        onChange={(e) => setDoctors(doctors.map((d, idx) => idx === i ? { ...d, qualification: e.target.value } : d))}
+                        placeholder="BDS, MDS – Orthodontics"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Bio</label>
+                      <textarea
+                        value={doc.bio}
+                        onChange={(e) => setDoctors(doctors.map((d, idx) => idx === i ? { ...d, bio: e.target.value } : d))}
+                        rows={2}
+                        placeholder="Short description..."
+                        className={`${inputClass} resize-none`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Photo URL (optional)</label>
+                      <input
+                        type="url"
+                        value={doc.photo}
+                        onChange={(e) => setDoctors(doctors.map((d, idx) => idx === i ? { ...d, photo: e.target.value } : d))}
+                        placeholder="https://..."
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                ))}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Doctor Bio
-              <SectionTag label="↑ About section" />
-            </label>
-            <textarea
-              value={doctorBio}
-              onChange={(e) => setDoctorBio(e.target.value)}
-              rows={4}
-              placeholder="Dr. Sharma has 15 years of experience in cosmetic dentistry..."
-              className={`${inputClass} resize-none`}
-            />
-          </div>
-        </div>
+                <button
+                  onClick={() => setDoctors([...doctors, { name: '', qualification: '', bio: '', photo: '' }])}
+                  className="w-full border-2 border-dashed border-gray-300 text-gray-500 text-sm py-3 rounded-xl hover:border-blue-400 hover:text-blue-600 transition-colors"
+                >
+                  + Add Another Doctor
+                </button>
+              </div>
+            )}
+
+            {/* ── PHOTOS ── */}
+            {id === 'photos' && (
+              <div className="space-y-4">
+                {/* Current photos grid */}
+                {photos.length === 0 ? (
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
+                    <p className="text-3xl mb-2">📷</p>
+                    <p className="text-sm font-medium text-gray-700">No photos yet</p>
+                    <p className="text-xs text-gray-400 mt-1">Add photos to show a gallery on your website</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">{photos.length} photo{photos.length !== 1 ? 's' : ''} · Drag first photo to set as featured</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {photos.map((url, i) => (
+                        <div key={i} className="relative group rounded-lg overflow-hidden aspect-square border border-gray-200">
+                          <img
+                            src={url}
+                            alt={`Photo ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                          {/* Overlay controls */}
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                            {i > 0 && (
+                              <button
+                                onClick={() => movePhotoLeft(i)}
+                                className="bg-white/90 text-gray-700 text-xs px-2 py-1 rounded font-medium hover:bg-white"
+                                title="Move to front"
+                              >
+                                ← Front
+                              </button>
+                            )}
+                            <button
+                              onClick={() => removePhoto(i)}
+                              className="bg-red-500 text-white text-xs px-2 py-1 rounded font-medium hover:bg-red-600"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          {i === 0 && (
+                            <span className="absolute top-1 left-1 bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded">
+                              Featured
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload from device */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Upload from device</p>
+                  <label className={`flex items-center justify-center gap-2 w-full border-2 border-dashed rounded-xl py-4 cursor-pointer transition-colors ${
+                    uploadingPhoto ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                  }`}>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploadingPhoto} />
+                    {uploadingPhoto ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-600 rounded-full animate-spin" />
+                        <span className="text-sm text-blue-600 font-medium">Uploading…</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-xl">📤</span>
+                        <span className="text-sm font-medium text-gray-600">Click to upload photo</span>
+                      </>
+                    )}
+                  </label>
+                  {!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && (
+                    <p className="text-xs text-amber-600 mt-1.5 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200">
+                      ⚠ Cloudinary not configured — add <code className="font-mono">NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME</code> & <code className="font-mono">NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET</code> to enable uploads
+                    </p>
+                  )}
+                </div>
+
+                {/* Add by URL */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Or paste image URL</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={newPhotoUrl}
+                      onChange={(e) => setNewPhotoUrl(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addPhotoByUrl()}
+                      placeholder="https://example.com/clinic-photo.jpg"
+                      className={inputClass}
+                    />
+                    <button
+                      onClick={addPhotoByUrl}
+                      disabled={!newPhotoUrl.trim()}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40 flex-shrink-0"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-400">
+                  Photos from Google Maps are added automatically when your clinic is scraped. You can remove or reorder them above.
+                </p>
+              </div>
+            )}
+
+            {/* ── SERVICES ── */}
+            {id === 'services' && (
+              <div>
+                {services.length === 0 && (
+                  <p className="text-xs text-gray-400 mb-3">Empty — default profession services will show.</p>
+                )}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {services.map((s, i) => (
+                    <span key={i} className="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
+                      {s}
+                      <button onClick={() => removeService(i)} className="text-blue-400 hover:text-blue-700 ml-0.5">✕</button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newService}
+                    onChange={(e) => setNewService(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addService()}
+                    placeholder="e.g. Teeth Whitening"
+                    className={inputClass}
+                  />
+                  <button onClick={addService} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex-shrink-0">
+                    Add
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── TESTIMONIALS ── */}
+            {id === 'testimonials' && (
+              <div>
+                {testimonials.length === 0 && (
+                  <p className="text-xs text-gray-400 mb-3">Empty — sample reviews will show.</p>
+                )}
+                <div className="space-y-4 mb-4">
+                  {testimonials.map((t, i) => (
+                    <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-white">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium text-gray-500">Review {i + 1}</span>
+                        <button onClick={() => removeTestimonial(i)} className="text-xs text-red-500 hover:underline">Remove</button>
+                      </div>
+                      <input value={t.name} onChange={(e) => updateTestimonial(i, 'name', e.target.value)} placeholder="Patient name" className={inputClass} />
+                      <input value={t.treatment} onChange={(e) => updateTestimonial(i, 'treatment', e.target.value)} placeholder="Treatment (e.g. Root Canal)" className={inputClass} />
+                      <textarea value={t.text} onChange={(e) => updateTestimonial(i, 'text', e.target.value)} placeholder="What did the patient say?" rows={2} className={`${inputClass} resize-none`} />
+                    </div>
+                  ))}
+                </div>
+                <button onClick={addTestimonial} className="w-full border-2 border-dashed border-gray-300 text-gray-500 text-sm py-2.5 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors">
+                  + Add Review
+                </button>
+              </div>
+            )}
+
+            {/* ── BOOKING ── */}
+            {id === 'booking' && (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">
+                  The booking form is automatically populated with your services and sends appointments to your dashboard.
+                </p>
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                  <p className="text-xs font-semibold text-blue-700 mb-1">✓ Auto-configured</p>
+                  <p className="text-xs text-blue-600">Patient name, phone, date, time & service — all captured automatically.</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── CONTACT ── */}
+            {id === 'contact' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="9876543210" className={inputClass} />
+                  <p className="text-xs text-gray-400 mt-1">10-digit number without +91</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Google Maps Link</label>
+                  <input type="url" value={googleMapsLink} onChange={(e) => setGoogleMapsLink(e.target.value)} placeholder="https://maps.google.com/..." className={inputClass} />
+                </div>
+              </div>
+            )}
+
+            {/* ── FOOTER ── */}
+            {id === 'footer' && (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">
+                  The footer shows your clinic name, address, phone, and quick links — pulled from your clinic profile automatically.
+                </p>
+                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <p className="text-xs font-semibold text-gray-600 mb-1">✓ Auto-populated fields</p>
+                  <p className="text-xs text-gray-500">Clinic name, area, city, phone, WhatsApp number</p>
+                </div>
+              </div>
+            )}
+
+          </AccordionSection>
+        ))}
 
         <button
           onClick={handleSave}
           disabled={saving || !clinicId}
-          className="w-full bg-blue-600 text-white font-semibold px-8 py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mt-2"
         >
-          {saving ? 'Saving…' : saved ? '✓ Saved! Preview refreshing…' : 'Save & Update Site'}
+          {saving ? (
+            <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</>
+          ) : saved ? (
+            '✓ Saved! Preview refreshing…'
+          ) : (
+            'Save & Update Site'
+          )}
         </button>
       </div>
 
-      {/* ── Right: live preview (fills remaining space) ── */}
+      {/* ── Right: live preview ── */}
       {subdomain && (
-        <div className="flex-1 min-w-0 flex flex-col hidden xl:flex sticky top-6" style={{ height: 'calc(100vh - 80px)' }}>
+        <div className="flex-1 min-w-0 hidden xl:flex flex-col sticky top-6" style={{ height: 'calc(100vh - 80px)' }}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">Live Preview</span>
-            <button
-              onClick={() => setPreviewKey((k) => k + 1)}
-              className="text-xs text-blue-600 hover:underline"
-            >
-              Refresh
-            </button>
+            <button onClick={() => setPreviewKey((k) => k + 1)} className="text-xs text-blue-600 hover:underline">Refresh</button>
           </div>
-          <PreviewPane subdomain={subdomain} refreshKey={previewKey} />
+          <PreviewPane subdomain={subdomain} refreshKey={previewKey} highlightSection={highlightSec} />
         </div>
       )}
 
-      {/* Mobile: preview button */}
       {subdomain && (
         <a
           href={`${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'}/${subdomain}`}

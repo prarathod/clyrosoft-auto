@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import DemoBanner from '@/components/DemoBanner'
+import SectionHighlighter from '@/components/SectionHighlighter'
 
 interface Props {
   children: React.ReactNode
@@ -28,9 +29,10 @@ export default async function ClinicLayout({ children, params }: Props) {
       {clinic.status === 'demo' && (
         <DemoBanner clinicName={clinic.clinic_name} />
       )}
+      <SectionHighlighter />
       <Navbar clinic={clinic} config={config} theme={theme} />
       {children}
-      <Footer clinic={clinic} config={config} />
+      <div data-section="footer"><Footer clinic={clinic} config={config} /></div>
       <FloatingWhatsApp phone={clinic.phone} doctorName={clinic.doctor_name} />
       <ThemeSwitcher />
     </ThemeProvider>

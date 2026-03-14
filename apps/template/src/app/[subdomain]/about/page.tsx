@@ -28,6 +28,8 @@ const WHY_US = [
   },
 ]
 
+interface ExtraDoctor { name: string; qualification: string; bio: string; photo: string }
+
 export default async function AboutPage({ params }: Props) {
   const clinic = await getClinicBySubdomain(params.subdomain)
   if (!clinic) notFound()
@@ -36,6 +38,13 @@ export default async function AboutPage({ params }: Props) {
   const whatsappUrl = `https://wa.me/91${clinic.phone}?text=${encodeURIComponent(
     `Hi Dr. ${clinic.doctor_name}, I'd like to book an appointment.`
   )}`
+
+  const extraDoctors: ExtraDoctor[] = Array.isArray((clinic as any).doctors)
+    ? (clinic as any).doctors.filter((d: ExtraDoctor) => d.name?.trim())
+    : []
+
+  const primaryBio = clinic.doctor_bio ||
+    `Dr. ${clinic.doctor_name} is a dedicated ${config.display_name.toLowerCase()} professional committed to providing compassionate, high-quality care. With a focus on patient comfort and modern techniques, our clinic offers a welcoming environment where every patient feels heard and valued.`
 
   return (
     <main className="min-h-screen bg-white">
@@ -46,39 +55,58 @@ export default async function AboutPage({ params }: Props) {
       >
         <p className="text-sm uppercase tracking-widest opacity-80 mb-2">{clinic.clinic_name}</p>
         <h1 className="text-4xl font-bold mb-3">About Us</h1>
-        <p className="opacity-80">Trusted dental care in {clinic.area}, {clinic.city}</p>
+        <p className="opacity-80">{config.display_name} in {clinic.area}, {clinic.city}</p>
       </section>
 
-      {/* Doctor Section */}
+      {/* Doctors Section */}
       <section className="py-16 px-4 max-w-4xl mx-auto">
-        <div className="flex flex-col md:flex-row items-center gap-10">
-          {/* Doctor Photo Placeholder */}
+        <h2 className="text-2xl font-bold text-gray-900 mb-10 text-center">
+          {extraDoctors.length > 0 ? 'Meet Our Doctors' : 'Meet the Doctor'}
+        </h2>
+
+        {/* Primary doctor */}
+        <div className="flex flex-col md:flex-row items-center gap-10 mb-12">
           <div
-            className="w-48 h-48 rounded-full flex-shrink-0 flex items-center justify-center text-6xl text-white shadow-lg"
+            className="w-40 h-40 rounded-full flex-shrink-0 flex items-center justify-center text-5xl text-white shadow-lg overflow-hidden"
             style={{ backgroundColor: config.primary_color }}
           >
-            👨‍⚕️
+            {clinic.photos?.[0]
+              ? <img src={clinic.photos[0]} alt={clinic.doctor_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              : '👨‍⚕️'}
           </div>
           <div>
-            <p className="text-sm uppercase tracking-widest text-gray-400 mb-1">
-              {config.display_name}
-            </p>
-            <h2 className="text-3xl font-bold text-gray-900 mb-1">Dr. {clinic.doctor_name}</h2>
+            <p className="text-sm uppercase tracking-widest mb-1" style={{ color: config.primary_color }}>{config.display_name}</p>
+            <h3 className="text-3xl font-bold text-gray-900 mb-1">Dr. {clinic.doctor_name}</h3>
             <p className="text-gray-500 mb-4">{clinic.clinic_name} · {clinic.area}, {clinic.city}</p>
-            <p className="text-gray-600 leading-relaxed">
-              Dr. {clinic.doctor_name} is a dedicated dental professional committed to providing
-              compassionate, high-quality care. With a focus on patient comfort and modern
-              techniques, our clinic offers a welcoming environment where every patient feels heard
-              and valued.
-            </p>
-            <a
-              href={`tel:+91${clinic.phone}`}
-              className="inline-block mt-4 text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
+            <p className="text-gray-600 leading-relaxed">{primaryBio}</p>
+            <a href={`tel:+91${clinic.phone}`} className="inline-block mt-4 text-sm font-medium text-gray-600 hover:text-gray-900">
               📞 +91 {clinic.phone}
             </a>
           </div>
         </div>
+
+        {/* Extra doctors */}
+        {extraDoctors.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {extraDoctors.map((doc, i) => (
+              <div key={i} className="flex gap-4 items-start p-5 rounded-2xl border border-gray-200 bg-gray-50">
+                <div
+                  className="w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center text-2xl text-white overflow-hidden"
+                  style={{ backgroundColor: config.primary_color }}
+                >
+                  {doc.photo
+                    ? <img src={doc.photo} alt={doc.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    : '👨‍⚕️'}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900">{doc.name.startsWith('Dr.') ? doc.name : `Dr. ${doc.name}`}</p>
+                  {doc.qualification && <p className="text-xs font-medium mb-1" style={{ color: config.primary_color }}>{doc.qualification}</p>}
+                  {doc.bio && <p className="text-sm text-gray-600 leading-relaxed">{doc.bio}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Why Choose Us */}

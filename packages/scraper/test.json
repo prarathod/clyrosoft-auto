@@ -1,0 +1,59 @@
+[
+  {
+    "clinic_name": "Dental Health Clinic",
+    "doctor_name": "Sidharth",
+    "phone": "9845101056",
+    "area": "\n150",
+    "city": "Bangalore",
+    "rating": 4.6,
+    "review_count": 129,
+    "has_website": true,
+    "website_url": "https://makeo.app/toothsi/experience-centre/bangalore/koramangala-2566?utm_source=google-reserve&utm_medium=book-online-button&utm_campaign=rightchoice-google-reserve&rwg_token=AFd1xnFa5mbkfNdEFh3C7VHhTEPOblxPb1s0eWf04UWyRYFkMqjct4oSJbvpxtZuB9hQWmEAo3r9uZyf-GRJWs1VvBurzd5H9w%3D%3D",
+    "query": "dental clinic Bangalore",
+    "photos": [
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqxiajQyH2dVha3OUvWnTf9I5-cx80PQK6KhLrEytPe9Q3gBJLVNe18nqg51m7sOrjBwsJgayVfWFypsiY2dSH5aRhlN14T0_noKvW2FUMhokWWwitteDEV19e0lxUDXroGDwxq=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoFYZbCp4Eq8WrOeSdpkboYZvibursF6jbskjNhX1nrWdi2IiNuaN7V6tZF3tJDTMFnuaLlTv_61vMBbGa6zSTHlJxcCNpcNqR3fHcdJ071MMAUSGo2A1PtwjepIJzOgDiwvsfr=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqqUyiy9kujIbtsjLJflIjctmXSEnydRAikhEZSAHjawG7yshffDeCHhgdJfnV08zyNpeNpbYnHMdysT1ohnhFlzvO0OVcpINd1u_eZ9s5nFhEV3-qeZoHY2MuF4XtpyAYxEJwVsQ=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAweohI-IjHvVSmwBQobdi1KEYubyotiNsadBZKb8-Sc45vwltwcMrLRpkzqIVfMygKXMovwiTdh9Hz2PJT6-8sfB8wCNZ-WHm_54CIgIjrDld8vbs3tM-K1igg33rM-BjVEtGVX-t=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAwepg9_bC0p9N2Q5zjqztaXMWl-o5EN4nkYprPyDkXuOj9LaFbFYZkgWuKdGiWDn_TiRw-G6bAAR9iYGs26lSEEkFjkJLPZvCw0zsRUqNaMBQXwOGNXXkcN2C2J_hTRPVxJjTn09GJ4U9png6=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAwepGJllp6266TckcM_J6zOLC4RlQCcZU43fTRt76erhdZhnPhTsmt80pe_P_8egFyscMl0HzIFnbxvXQMD7Oj648XZRJ-fdks1ncLTixG18Z7Hh7rghuAdzcOzjbIROkQgWPLr6Ysw=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-proxy/ALd4DhEaL9KUBLGp_D4UBu9OtJhY63tk0Xss2cp-frA_5WgAhs-0X2ulwVUMimyOrEiFxApLu4Vzpqk1akwjvsYiMX-HrJ1ALd9jT0pIAJrWwugbKzst_JGTYFVQoHgJyWLjp25fNoooIsFLlv07VV1iZxMYjXNRnA2ukxqHUS2hIM6R9KIWCnM5Akwnx8cYbbHIt3T2sT4=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAweoSeMSfapJZT5VvPqaPoPcz71XHj-beQ8feKx_R8viYgwPRkC2agS82YZMUY8ynNq-8rb7RuGkDdsgZB01sfngfvAVvxx3dG05wLBrHfi5w0Z6RCFaebUiyyMPKKAxXePjzBif5BavLAis=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAwepS7DPRVys4EOVzQFrqj56wgLFu1DsO_MqLJDGf3Jp4nwKg0fJE0UDdG25qlVQzJjiQDSNbF4EEAwDUpPpMilU6XbW0TzVoBk-l-DsvDKsS0FJUPuX2Jly5sn6oswnowwPbJq70YWp5ZDG1=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqMG9jlwplpArCBRvTxxUuEmIBsn79n3_HF5HIdCI2K9cK8MOry4a4F-3zLr-acA1Sbbz5BLS-uGraqnStSv8hWa9gOUCkMDSuoPbAudvMY966dX3roJmguy_KnXDI3f5UibfE=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAwerA4PPLWd-vL-ZWwKea-Zmt8hiyHLH03bm6MzZwaBISJM0eHypAONZVTax9eQP1B2t1mUzXd0kpaaerO68AworzzRzB7QCqIgV8pSxacAupEk-8tlXTdA-6mp8qVZoFQO9FBfU=w1200-h900-k-no",
+      "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqDG_RojYyRf9C0qkXfGzBCwRO9UTtd8a9SH3eRBLUPRk8n1sx-uksZ2i34UkZ3WIfVJ0cy7KS5jPteXUAsi11oqYBY9OBF9lt1GcILDiWB2TZng7-_zk0pbmaTlv2E35LU9aO3=w1200-h900-k-no"
+    ],
+    "qualification": "dontic & Implant Clinic, mdhari Fresh",
+    "doctor_bio": "Dental clinic · 150, 5th Cross, Opposite Dhanalaxmi Bank, KHB Colony, 60 Feet Rd, next to Juice Junction",
+    "services": [
+      "Dental Alliance"
+    ],
+    "testimonials": [
+      {
+        "name": "Sowmya Jalari",
+        "text": "Dr. Prasad is an excellent doctor who treats patients with great care and professionalism. He listens patiently, explains everything clearly, and makes you feel comfortable throughout the treatment. T",
+        "rating": 5
+      },
+      {
+        "name": "Sowmya Jalari",
+        "text": "Dr. Prasad is an excellent doctor who treats patients with great care and professionalism. He listens patiently, explains everything clearly, and makes you feel comfortable throughout the treatment. T",
+        "rating": 5
+      },
+      {
+        "name": "Raju Subramanyam",
+        "text": "Dr Prasad is a kind, compassion person and service-oriented dental doctor. His patience and approachability create great confidence, and once consulted, patients are likely to remain associated with h",
+        "rating": 5
+      }
+    ],
+    "google_maps_url": "https://www.google.com/maps/place/Dental+Health+Clinic/@12.9366162,77.6112618,16z/data=!4m11!1m3!2m2!1sdental+clinic+Bangalore!6e1!3m6!1s0x3bae14457272fd59:0xa78c0985308dff1b!8m2!3d12.9366162!4d77.620274!15sChdkZW50YWwgY2xpbmljIEJhbmdhbG9yZZIBDWRlbnRhbF9jbGluaWPgAQA!16s%2Fg%2F1tdcvjzl?entry=ttu&g_ep=EgoyMDI2MDMxMS4wIKXMDSoASAFQAw%3D%3D",
+    "category": "Dental clinic",
+    "tagline": "Expert Dental clinic in \n150, Bangalore",
+    "email": "",
+    "full_address": "\n150, 5th Cross, Opposite Dhanalaxmi Bank, KHB Colony, 60 Feet Rd, next to Juice Junction, KHB Block Koramangala, 5th Block, Koramangala, Bengaluru, Karnataka 560095",
+    "opening_hours": [
+      "Saturday10:30 am–10 pmSuggest new hours",
+      "Saturday10:30 am–10 pm"
+    ]
+  }
+]

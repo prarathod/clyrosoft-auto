@@ -23,6 +23,7 @@ export interface Client {
   testimonials?: Array<{ name: string; text: string; treatment: string }> | null
   google_maps_link?: string | null
   photos?: string[] | null
+  doctors?: Array<{ name: string; qualification: string; bio: string; photo: string }> | null
 }
 
 export interface Database {
@@ -41,7 +42,7 @@ export interface ProfessionConfig {
   profession: string
   display_name: string
   primary_color: string
-  theme?: string        // 'classic' | 'modern' | 'minimal' — defaults to 'classic'
+  theme?: string        // 'classic'|'modern'|'minimal'|'vitality'|'elegant'|'warm'
   services: string[]
   features: string[]
   hero_tagline: string

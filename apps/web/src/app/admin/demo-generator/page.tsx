@@ -3,8 +3,27 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-const PROFESSIONS = ['dental', 'skin', 'physio', 'general', 'eye', 'orthopedic']
-const THEMES = ['classic', 'modern', 'minimal']
+const PROFESSIONS = [
+  'dental', 'skin', 'physio', 'general', 'eye', 'orthopedic',
+  'ent', 'cardiology', 'neurology', 'psychiatry', 'ayurveda',
+  'fertility', 'pediatric', 'gynecology', 'oncology', 'urology',
+  'nephrology', 'gastro', 'pulmonology', 'endocrinology',
+  'rheumatology', 'spine', 'neuro-surgery', 'plastic-surgery',
+  'bariatric', 'vascular', 'radiology', 'pathology',
+  'homeopathy', 'naturopathy', 'dietitian', 'psychologist',
+  'yoga', 'chiropractic', 'acupuncture', 'occupational',
+  'speech', 'audiology', 'optometry', 'hair-transplant', 'ivf',
+]
+
+const THEMES = [
+  { value: 'classic',  label: 'Classic — Blue, clean & trustworthy' },
+  { value: 'modern',   label: 'Modern — Split layout with hero photo' },
+  { value: 'minimal',  label: 'Minimal — Light & distraction-free' },
+  { value: 'vitality', label: 'Vitality — Emerald green with stats' },
+  { value: 'elegant',  label: 'Elegant — Dark navy & gold, luxury' },
+  { value: 'warm',     label: 'Warm — Coral gradient, friendly feel' },
+]
+
 const TEMPLATE_URL = process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3000'
 
 function generateSubdomain(clinicName: string): string {
@@ -19,6 +38,8 @@ function generateSubdomain(clinicName: string): string {
 
 function DemoGeneratorForm() {
   const searchParams = useSearchParams()
+  const leadId = searchParams.get('lead_id')
+
   const [form, setForm] = useState({
     clinic_name: searchParams.get('name') ?? '',
     doctor_name: searchParams.get('doctor') ?? '',
@@ -76,7 +97,18 @@ function DemoGeneratorForm() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to create demo')
 
-      setResult({ url: `${TEMPLATE_URL}/${finalSubdomain}`, subdomain: finalSubdomain })
+      const demoUrl = `${TEMPLATE_URL}/${finalSubdomain}`
+
+      // Save demo_url back to the lead if we came from a lead
+      if (leadId) {
+        await fetch(`/api/leads/${leadId}/demo-url`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ demo_url: demoUrl }),
+        })
+      }
+
+      setResult({ url: demoUrl, subdomain: finalSubdomain })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create demo')
     } finally {
@@ -91,13 +123,17 @@ function DemoGeneratorForm() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-black text-white mb-1">Demo Generator</h1>
-        <p className="text-gray-500 text-sm">Create a new demo clinic website instantly</p>
+        <p className="text-gray-500 text-sm">
+          Create a new demo clinic website instantly
+          {leadId && <span className="ml-2 text-blue-400 text-xs">· linked to lead</span>}
+        </p>
       </div>
 
       {result ? (
         <div className="bg-green-950 border border-green-800 rounded-2xl p-8 text-center">
           <div className="text-4xl mb-4">🎉</div>
           <h2 className="text-xl font-bold text-white mb-2">Demo Created!</h2>
+          {leadId && <p className="text-green-400 text-sm mb-2">✓ Demo URL saved to lead</p>}
           <p className="text-gray-400 text-sm mb-6">The demo site is live at:</p>
           <a
             href={result.url}
@@ -111,12 +147,22 @@ function DemoGeneratorForm() {
             <p className="text-xs text-gray-500 mb-1">Demo URL to send client:</p>
             <p className="text-blue-400 font-mono text-sm">{result.url}</p>
           </div>
-          <button
-            onClick={() => { setResult(null); setForm({ clinic_name: '', doctor_name: '', phone: '', email: '', area: '', city: '', profession_type: 'dental', theme: 'classic', tagline: '' }) }}
-            className="mt-6 text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            Create another →
-          </button>
+          <div className="mt-3 flex gap-3 justify-center">
+            {leadId && (
+              <a
+                href="/admin/leads"
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                ← Back to leads (WA button now uses this URL)
+              </a>
+            )}
+            <button
+              onClick={() => { setResult(null); setForm({ clinic_name: '', doctor_name: '', phone: '', email: '', area: '', city: '', profession_type: 'dental', theme: 'classic', tagline: '' }) }}
+              className="text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Create another →
+            </button>
+          </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-5">
@@ -152,9 +198,9 @@ function DemoGeneratorForm() {
               </select>
             </div>
             <div>
-              <label className={labelClass}>Theme</label>
+              <label className={labelClass}>Theme / Design</label>
               <select value={form.theme} onChange={set('theme')} className={inputClass}>
-                {THEMES.map((t) => <option key={t} value={t}>{t}</option>)}
+                {THEMES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
           </div>
