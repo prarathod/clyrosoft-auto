@@ -14,6 +14,8 @@ interface Lead {
   created_at: string
   contacted?: boolean
   demo_url?: string | null
+  profession_type?: string | null
+  photos?: string[] | null
 }
 
 const CLINIQO_URL = process.env.NEXT_PUBLIC_TEMPLATE_URL || 'https://cliniqo.in'
@@ -104,6 +106,9 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [creatingDemo, setCreatingDemo] = useState<string | null>(null)
+  // Track demo_urls created in this session without a full page refresh
+  const [localDemoUrls, setLocalDemoUrls] = useState<Record<string, string>>({})
 
   async function markContacted(id: string) {
     const supabase = createClient()
@@ -121,10 +126,39 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
   }
 
   async function copyMessage(lead: Lead) {
-    const msg = buildPlainMessage(lead.doctor_name, lead.clinic_name, lead.city, lead.demo_url)
+    const demoUrl = localDemoUrls[lead.id] ?? lead.demo_url
+    const msg = buildPlainMessage(lead.doctor_name, lead.clinic_name, lead.city, demoUrl)
     await navigator.clipboard.writeText(msg)
     setCopied(lead.id)
     setTimeout(() => setCopied(null), 2000)
+  }
+
+  async function openWA(lead: Lead) {
+    let demoUrl = localDemoUrls[lead.id] ?? lead.demo_url
+
+    // Auto-create demo if one doesn't exist yet
+    if (!demoUrl) {
+      setCreatingDemo(lead.id)
+      try {
+        const res = await fetch(`/api/leads/${lead.id}/auto-demo`, { method: 'POST' })
+        const json = await res.json()
+        if (json.demo_url) {
+          demoUrl = json.demo_url
+          setLocalDemoUrls((prev) => ({ ...prev, [lead.id]: demoUrl as string }))
+          router.refresh()
+        }
+      } catch {
+        // fall through — open WA without demo link
+      } finally {
+        setCreatingDemo(null)
+      }
+    }
+
+    await markContacted(lead.id)
+    window.open(
+      buildWAUrl(lead.phone, lead.doctor_name, lead.clinic_name, lead.city, demoUrl),
+      '_blank',
+    )
   }
 
   if (leads.length === 0) {
@@ -163,7 +197,7 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                     <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${lead.contacted ? 'bg-green-900 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
                       {lead.contacted ? 'Contacted' : 'New'}
                     </span>
-                    {lead.demo_url && (
+                    {(localDemoUrls[lead.id] ?? lead.demo_url) && (
                       <span className="text-xs px-2 py-0.5 rounded-full w-fit bg-blue-900 text-blue-400">Demo ready</span>
                     )}
                   </div>
@@ -176,9 +210,9 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                     >
                       {lead.demo_url ? '⚡ Re-demo' : '⚡ Demo'}
                     </a>
-                    {lead.demo_url && (
+                    {(localDemoUrls[lead.id] ?? lead.demo_url) && (
                       <a
-                        href={lead.demo_url}
+                        href={localDemoUrls[lead.id] ?? lead.demo_url!}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-2.5 py-1 rounded-lg transition-colors"
@@ -193,17 +227,15 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                     >
                       ✓ Mark
                     </button>
-                    <a
-                      href={buildWAUrl(lead.phone, lead.doctor_name, lead.clinic_name, lead.city, lead.demo_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => markContacted(lead.id)}
-                      className="text-xs bg-emerald-900 hover:bg-emerald-800 text-emerald-400 px-2.5 py-1 rounded-lg transition-colors"
-                    >
-                      💬 WA
-                    </a>
                     <button
-                      onClick={() => copyMessage(lead)}
+                      onClick={() => openWA(lead)}
+                      disabled={creatingDemo === lead.id}
+                      className="text-xs bg-emerald-900 hover:bg-emerald-800 text-emerald-400 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-60"
+                    >
+                      {creatingDemo === lead.id ? '⏳ Creating...' : '💬 WA'}
+                    </button>
+                    <button
+                      onClick={() => copyMessage({ ...lead, demo_url: localDemoUrls[lead.id] ?? lead.demo_url })}
                       className="text-xs bg-yellow-900 hover:bg-yellow-800 text-yellow-400 px-2.5 py-1 rounded-lg transition-colors"
                     >
                       {copied === lead.id ? '✓ Copied!' : '📋 Copy'}
