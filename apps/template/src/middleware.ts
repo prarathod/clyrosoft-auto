@@ -23,8 +23,8 @@ export function middleware(req: NextRequest) {
   // Extract subdomain from hostname (e.g. sharma.myclinic.com → sharma)
   const subdomain = hostname.replace(`.${rootDomain}`, '')
 
-  // If no subdomain extracted (replacement failed) or it's www, pass through
-  if (!subdomain || subdomain === 'www' || subdomain === hostname) {
+  // If no subdomain extracted (replacement failed), www, or demo → pass through to path-based routing
+  if (!subdomain || subdomain === 'www' || subdomain === 'demo' || subdomain === hostname) {
     return NextResponse.next()
   }
 
