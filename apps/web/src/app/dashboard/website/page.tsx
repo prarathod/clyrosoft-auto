@@ -269,6 +269,7 @@ export default function WebsitePage() {
                     {/* Current preview */}
                     <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-200 flex-shrink-0 bg-gray-100 flex items-center justify-center">
                       {photos[0] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={photos[0]}
                           alt="Hero"
@@ -505,6 +506,7 @@ export default function WebsitePage() {
                     <div className="grid grid-cols-3 gap-2">
                       {photos.map((url, i) => (
                         <div key={i} className="relative group rounded-lg overflow-hidden aspect-square border border-gray-200">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={url}
                             alt={`Photo ${i + 1}`}

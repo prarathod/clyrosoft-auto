@@ -342,7 +342,7 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="text-blue-500 hover:underline"
             >
-              Use the "Template" button (bottom-left) to switch between all 6
+              Use the &quot;Template&quot; button (bottom-left) to switch between all 6
             </a>
           </p>
         </div>
