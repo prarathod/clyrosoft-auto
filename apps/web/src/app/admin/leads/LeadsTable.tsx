@@ -16,6 +16,7 @@ interface Lead {
   demo_url?: string | null
   profession_type?: string | null
   photos?: string[] | null
+  wa_invalid?: boolean | null
 }
 
 const CLINIQO_URL = process.env.NEXT_PUBLIC_TEMPLATE_URL || 'https://cliniqo.in'
@@ -107,13 +108,33 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [creatingDemo, setCreatingDemo] = useState<string | null>(null)
-  // Track demo_urls created in this session without a full page refresh
   const [localDemoUrls, setLocalDemoUrls] = useState<Record<string, string>>({})
+  // Optimistic local state — updates instantly without waiting for router.refresh()
+  const [localContacted, setLocalContacted] = useState<Set<string>>(new Set())
+  const [localWaSent, setLocalWaSent] = useState<Set<string>>(new Set())
+  const [localWaInvalid, setLocalWaInvalid] = useState<Set<string>>(
+    new Set(leads.filter((l) => l.wa_invalid).map((l) => l.id))
+  )
+
+  function isContacted(lead: Lead) { return localContacted.has(lead.id) || !!lead.contacted }
+  function isWaInvalid(lead: Lead) { return localWaInvalid.has(lead.id) }
+  function isWaSent(lead: Lead)    { return localWaSent.has(lead.id) }
 
   async function markContacted(id: string) {
+    setLocalContacted((prev) => new Set(prev).add(id))
     const supabase = createClient()
     await supabase.from('leads').update({ contacted: true }).eq('id', id)
-    router.refresh()
+  }
+
+  async function toggleWaInvalid(lead: Lead) {
+    const next = !isWaInvalid(lead)
+    setLocalWaInvalid((prev) => {
+      const s = new Set(prev)
+      next ? s.add(lead.id) : s.delete(lead.id)
+      return s
+    })
+    const supabase = createClient()
+    await supabase.from('leads').update({ wa_invalid: next }).eq('id', lead.id)
   }
 
   async function deleteLead(id: string) {
@@ -145,7 +166,6 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
         if (json.demo_url) {
           demoUrl = json.demo_url
           setLocalDemoUrls((prev) => ({ ...prev, [lead.id]: demoUrl as string }))
-          router.refresh()
         }
       } catch {
         // fall through — open WA without demo link
@@ -154,7 +174,10 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
       }
     }
 
-    await markContacted(lead.id)
+    // Mark contacted + WA sent instantly (no refresh needed)
+    markContacted(lead.id)
+    setLocalWaSent((prev) => new Set(prev).add(lead.id))
+
     window.open(
       buildWAUrl(lead.phone, lead.doctor_name, lead.clinic_name, lead.city, demoUrl),
       '_blank',
@@ -194,11 +217,17 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-col gap-1">
-                    <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${lead.contacted ? 'bg-green-900 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
-                      {lead.contacted ? 'Contacted' : 'New'}
+                    <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${isContacted(lead) ? 'bg-green-900 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
+                      {isContacted(lead) ? 'Contacted' : 'New'}
                     </span>
                     {(localDemoUrls[lead.id] ?? lead.demo_url) && (
                       <span className="text-xs px-2 py-0.5 rounded-full w-fit bg-blue-900 text-blue-400">Demo ready</span>
+                    )}
+                    {isWaSent(lead) && (
+                      <span className="text-xs px-2 py-0.5 rounded-full w-fit bg-emerald-900 text-emerald-400">💬 WA sent</span>
+                    )}
+                    {isWaInvalid(lead) && (
+                      <span className="text-xs px-2 py-0.5 rounded-full w-fit bg-red-950 text-red-400">❌ Not on WA</span>
                     )}
                   </div>
                 </td>
@@ -208,7 +237,7 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                       href={`/admin/demo-generator?lead_id=${lead.id}&name=${encodeURIComponent(lead.clinic_name)}&doctor=${encodeURIComponent(lead.doctor_name)}&phone=${lead.phone}&city=${encodeURIComponent(lead.city)}&area=${encodeURIComponent(lead.area ?? '')}`}
                       className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg transition-colors"
                     >
-                      {lead.demo_url ? '⚡ Re-demo' : '⚡ Demo'}
+                      {(localDemoUrls[lead.id] ?? lead.demo_url) ? '⚡ Re-demo' : '⚡ Demo'}
                     </a>
                     {(localDemoUrls[lead.id] ?? lead.demo_url) && (
                       <a
@@ -222,7 +251,7 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                     )}
                     <button
                       onClick={() => markContacted(lead.id)}
-                      disabled={lead.contacted}
+                      disabled={isContacted(lead)}
                       className="text-xs bg-green-900 hover:bg-green-800 text-green-400 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40"
                     >
                       ✓ Mark
@@ -233,6 +262,17 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                       className="text-xs bg-emerald-900 hover:bg-emerald-800 text-emerald-400 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-60"
                     >
                       {creatingDemo === lead.id ? '⏳ Creating...' : '💬 WA'}
+                    </button>
+                    <button
+                      onClick={() => toggleWaInvalid(lead)}
+                      className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${
+                        isWaInvalid(lead)
+                          ? 'bg-red-950 hover:bg-red-900 text-red-400'
+                          : 'bg-gray-800 hover:bg-gray-700 text-gray-500'
+                      }`}
+                      title={isWaInvalid(lead) ? 'Mark as on WA' : 'Mark as not on WA'}
+                    >
+                      {isWaInvalid(lead) ? '❌ Not WA' : '📵 Not WA'}
                     </button>
                     <button
                       onClick={() => copyMessage({ ...lead, demo_url: localDemoUrls[lead.id] ?? lead.demo_url })}
