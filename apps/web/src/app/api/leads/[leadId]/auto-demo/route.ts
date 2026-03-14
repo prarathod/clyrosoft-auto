@@ -3,14 +3,31 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 const TEMPLATE_URL = process.env.NEXT_PUBLIC_TEMPLATE_URL || 'https://demo.cliniqo.online'
 
-// Theme map by profession_type keyword
+// Mirrors the theme assignments in apps/template/src/lib/getClinicData.ts PROFESSION_MAP
 function pickTheme(profession: string): string {
   const p = profession.toLowerCase()
-  if (p.includes('skin') || p.includes('derma') || p.includes('plastic') || p.includes('hair')) return 'modern'
-  if (p.includes('eye') || p.includes('ortho') || p.includes('spine') || p.includes('cardio') || p.includes('neuro') || p.includes('oncol')) return 'elegant'
-  if (p.includes('physio') || p.includes('yoga') || p.includes('ayur') || p.includes('naturo') || p.includes('weight') || p.includes('sports')) return 'vitality'
-  if (p.includes('child') || p.includes('pediatr') || p.includes('maternity') || p.includes('gynec') || p.includes('fertility') || p.includes('speech') || p.includes('occupat')) return 'warm'
-  if (p.includes('general surgery') || p.includes('pain') || p.includes('diagnostic') || p.includes('pathol') || p.includes('radiol')) return 'minimal'
+  // vitality
+  if (p.includes('dental') || p.includes('physio') || p.includes('ayur') ||
+      p.includes('naturo') || p.includes('homeo') || p.includes('pulmo') ||
+      p.includes('diabetes') || p.includes('sports') || p.includes('weight') ||
+      p.includes('nutrition') || p.includes('unani')) return 'vitality'
+  // elegant
+  if (p.includes('eye') || p.includes('ophthal') || p.includes('ortho') ||
+      p.includes('spine') || p.includes('cardio') || p.includes('neuro') ||
+      p.includes('oncol') || p.includes('nephro') || p.includes('rheuma') ||
+      p.includes('radiol') || p.includes('acupunct')) return 'elegant'
+  // modern
+  if (p.includes('skin') || p.includes('derma') || p.includes('plastic') ||
+      p.includes('hair transplant') || p.includes('cosmet')) return 'modern'
+  // warm
+  if (p.includes('child') || p.includes('pediatr') || p.includes('gynec') ||
+      p.includes('maternity') || p.includes('fertility') || p.includes('ivf') ||
+      p.includes('neonatal') || p.includes('speech') || p.includes('occupat') ||
+      p.includes('psychiatr') || p.includes('mental') || p.includes('veterin')) return 'warm'
+  // minimal
+  if (p.includes('ent') || p.includes('general surgery') || p.includes('pain') ||
+      p.includes('diagnostic') || p.includes('pathol')) return 'minimal'
+  // classic (general physician, gastro, endo, urology, etc.)
   return 'classic'
 }
 
