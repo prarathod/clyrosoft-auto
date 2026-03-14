@@ -30,16 +30,18 @@ export default function ClientsTable({ clients }: { clients: Client[] }) {
 
   async function changeStatus(id: string, status: string) {
     setUpdating(id)
-    const supabase = createClient()
-    await supabase.from('clients').update({ status }).eq('id', id)
+    await fetch(`/api/clients/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
     router.refresh()
     setUpdating(null)
   }
 
   async function deleteClient(id: string, name: string) {
     if (!confirm(`Delete ${name}? This cannot be undone.`)) return
-    const supabase = createClient()
-    await supabase.from('clients').delete().eq('id', id)
+    await fetch(`/api/clients/${id}`, { method: 'DELETE' })
     router.refresh()
   }
 
