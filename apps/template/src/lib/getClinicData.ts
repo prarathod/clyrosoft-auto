@@ -14,27 +14,45 @@ const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
     )
   : supabase
 
-const MOCK_CLINIC: Client = {
-  id: 'demo',
-  profession_type: 'dental',
-  clinic_name: 'Sharma Dental Clinic',
-  doctor_name: 'Ramesh Sharma',
-  phone: '9876543210',
-  email: 'sharma@example.com',
-  city: 'Bangalore',
-  area: 'Koramangala',
-  subdomain: 'demo',
-  status: 'demo',
-  payment_date: null,
-  monthly_amount: 499,
-  created_at: new Date().toISOString(),
-  photos: [
-    'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?w=800&h=600&fit=crop',
-  ],
+const DEMO_PHOTOS = [
+  'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?w=800&h=600&fit=crop',
+]
+
+function makeMockClinic(theme: ThemeKey, subdomain: string): Client {
+  return {
+    id: 'demo',
+    profession_type: 'dental',
+    clinic_name: 'Sharma Dental Clinic',
+    doctor_name: 'Ramesh Sharma',
+    phone: '9876543210',
+    email: 'sharma@example.com',
+    city: 'Bangalore',
+    area: 'Koramangala',
+    subdomain,
+    status: 'demo',
+    payment_date: null,
+    monthly_amount: 499,
+    created_at: new Date().toISOString(),
+    theme,
+    photos: DEMO_PHOTOS,
+  }
+}
+
+const MOCK_CLINIC: Client = makeMockClinic('classic', 'demo')
+
+// Subdomains that serve theme-specific mock demo sites
+const DEMO_THEME_MAP: Record<string, ThemeKey> = {
+  'demo':          'classic',
+  'demo-classic':  'classic',
+  'demo-modern':   'modern',
+  'demo-minimal':  'minimal',
+  'demo-vitality': 'vitality',
+  'demo-elegant':  'elegant',
+  'demo-warm':     'warm',
 }
 
 // ── Profession config map ─────────────────────────────────────────────────────
@@ -407,6 +425,11 @@ function withFallbackPhotos(clinic: Client): Client {
 }
 
 export const getClinicBySubdomain = cache(async (subdomain: string): Promise<Client | null> => {
+  // Serve theme-specific mock demo sites without hitting the database
+  if (subdomain in DEMO_THEME_MAP) {
+    return makeMockClinic(DEMO_THEME_MAP[subdomain], subdomain)
+  }
+
   if (!supabaseAdmin) return MOCK_CLINIC
   const { data, error } = await supabaseAdmin
     .from('clients')
