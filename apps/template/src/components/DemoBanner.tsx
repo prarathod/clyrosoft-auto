@@ -19,7 +19,7 @@ export default function DemoBanner({ clinicName }: Props) {
         rel="noopener noreferrer"
         className="underline font-bold hover:text-amber-800"
       >
-        Go live in 24 hours → ₹499/month
+        Go live in 24 hours → 299/month
       </a>
     </div>
   )

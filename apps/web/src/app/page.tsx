@@ -304,7 +304,7 @@ export default function LandingPage() {
             {TEMPLATES.map((t) => (
               <a
                 key={t.key}
-                href={`${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'}/demo`}
+                href={`${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'https://demo.cliniqo.online'}/demo`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group block rounded-2xl overflow-hidden border border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all bg-white"
@@ -337,7 +337,7 @@ export default function LandingPage() {
           <p className="text-center text-xs text-gray-400 mt-6">
             Click any template to see a live demo site →{' '}
             <a
-              href={`${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'}/demo`}
+              href={`${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'https://demo.cliniqo.online'}/demo`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 hover:underline"
