@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 
-const ADMIN_WA = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ?? '919999999999'
+const ADMIN_WA = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ?? '919011509422'
 
 export default function ContactForm() {
   const [form, setForm] = useState({ clinic_name: '', doctor_name: '', phone: '', city: '' })

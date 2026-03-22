@@ -510,7 +510,7 @@ export default function LandingPage() {
           </div>
           <div className="text-xs text-center">
             <a
-              href={`https://wa.me/${process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ?? '919999999999'}`}
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ?? '919011509422'}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-green-400 hover:text-green-300 transition-colors"

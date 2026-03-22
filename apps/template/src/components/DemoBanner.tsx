@@ -6,7 +6,7 @@ interface Props {
 
 export default function DemoBanner({ clinicName }: Props) {
   // Owner phone — set NEXT_PUBLIC_OWNER_PHONE in .env.local
-  const ownerPhone = process.env.NEXT_PUBLIC_OWNER_PHONE ?? '9999999999'
+  const ownerPhone = process.env.NEXT_PUBLIC_OWNER_PHONE ?? '9011509422'
   const message = encodeURIComponent(
     `Hi! I saw the demo website created for ${clinicName}. I'd like to activate it for ₹999/month.`
   )

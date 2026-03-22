@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 export default function NotFound() {
-  const ownerPhone = process.env.NEXT_PUBLIC_OWNER_PHONE ?? '9999999999'
+  const ownerPhone = process.env.NEXT_PUBLIC_OWNER_PHONE ?? '9011509422'
   const message = encodeURIComponent('Hi! I was looking for a clinic demo website. Can you help?')
 
   return (

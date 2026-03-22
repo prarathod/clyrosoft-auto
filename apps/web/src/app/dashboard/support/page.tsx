@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 
-const ADMIN_WA = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ?? '919999999999'
+const ADMIN_WA = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ?? '919011509422'
 
 const QUICK = [
   'I need help with my website',
