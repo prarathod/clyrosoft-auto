@@ -11,6 +11,7 @@ const NAV = [
   { href: '/admin/demo-generator', icon: '⚡', label: 'Demo Generator'  },
   { href: '/admin/analytics',      icon: '📊', label: 'Analytics'       },
   { href: '/admin/support',        icon: '💬', label: 'Support'         },
+  { href: '/admin/team',           icon: '👤', label: 'Team'            },
 ]
 
 export default function AdminSidebar() {

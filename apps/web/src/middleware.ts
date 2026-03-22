@@ -22,6 +22,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // ─── Sales rep auth (cookie-based) ───────────────────────────────────
+  if (pathname.startsWith('/sales') && pathname !== '/sales/login') {
+    const salesToken = request.cookies.get('sales_token')?.value
+    if (!salesToken || salesToken !== process.env.SALES_SECRET) {
+      return NextResponse.redirect(new URL('/sales/login', request.url))
+    }
+    return NextResponse.next()
+  }
+  if (pathname === '/sales/login') {
+    const salesToken = request.cookies.get('sales_token')?.value
+    if (salesToken === process.env.SALES_SECRET) {
+      return NextResponse.redirect(new URL('/sales', request.url))
+    }
+    return NextResponse.next()
+  }
+
   // ─── Client dashboard auth (Supabase session) ────────────────────────
   let response = NextResponse.next({ request: { headers: request.headers } })
   const supabase = createServerClient(
@@ -57,5 +73,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/admin/:path*', '/admin'],
+  matcher: ['/dashboard/:path*', '/login', '/admin/:path*', '/admin', '/sales/:path*', '/sales'],
 }

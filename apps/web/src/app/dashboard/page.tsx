@@ -18,8 +18,36 @@ export default async function DashboardPage() {
   const isLive = clinic.status === 'paying'
   const siteUrl = `${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'}/${clinic.subdomain}`
 
+  // Fetch appointment count for conversion nudge (only matters for demo clinics)
+  const { count: appointmentCount } = await supabase
+    .from('appointments')
+    .select('*', { count: 'exact', head: true })
+    .eq('subdomain', clinic.subdomain)
+
+  const showNudge = !isLive && (appointmentCount ?? 0) > 0
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      {/* Conversion nudge — shown when demo clinic has received bookings */}
+      {showNudge && (
+        <div className="rounded-2xl p-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+          <div>
+            <p className="font-bold text-base">
+              🎉 You have {appointmentCount} appointment{appointmentCount === 1 ? '' : 's'} waiting!
+            </p>
+            <p className="text-blue-100 text-sm mt-0.5">
+              Go live now — remove the demo banner and let patients book for real.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/subscription"
+            className="shrink-0 bg-white text-blue-700 font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-colors"
+          >
+            Upgrade → ₹299/mo
+          </Link>
+        </div>
+      )}
+
       {/* Status card */}
       <div className={`rounded-2xl p-6 border ${isLive ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
         <div className="flex items-start justify-between">
