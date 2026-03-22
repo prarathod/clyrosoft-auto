@@ -1,7 +1,18 @@
 import { cache } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import type { Client, ProfessionConfig } from '@/types/database'
 import type { ThemeKey } from '@/styles/themes'
+
+// Server-side admin client that bypasses RLS — only used in server components/functions.
+// Falls back to anon client if service role key is not set.
+const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { global: { fetch: (input, init = {}) => fetch(input, { ...init, cache: 'no-store' }) } }
+    )
+  : supabase
 
 const MOCK_CLINIC: Client = {
   id: 'demo',
@@ -396,8 +407,8 @@ function withFallbackPhotos(clinic: Client): Client {
 }
 
 export const getClinicBySubdomain = cache(async (subdomain: string): Promise<Client | null> => {
-  if (!supabase) return MOCK_CLINIC
-  const { data, error } = await supabase
+  if (!supabaseAdmin) return MOCK_CLINIC
+  const { data, error } = await supabaseAdmin
     .from('clients')
     .select('*')
     .eq('subdomain', subdomain)
