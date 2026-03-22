@@ -44,7 +44,7 @@ function buildWAMessage(client: Client): string {
     E.check + enc(' Photo gallery & patient reviews\n') +
     E.check + enc(' Mobile-friendly design\n') +
     E.check + enc(' 6+ professional designs to choose from ') + E.star +
-    enc('\n\n*\u20B9499/month only* — no setup fee, cancel anytime. ') + E.target +
+    enc('\n\n*\u20B9299/month only* — no setup fee, cancel anytime. ') + E.target +
     enc('\n\nLike what you see? Just reply *YES*! ') + E.pray
   )
 }
@@ -88,7 +88,7 @@ ${check} Photo gallery & patient reviews
 ${check} Mobile-friendly design
 ${check} 6+ professional designs to choose from ${star}
 
-*\u20B9499/month only* — no setup fee, cancel anytime. ${target}
+*\u20B9299/month only* — no setup fee, cancel anytime. ${target}
 
 Like what you see? Just reply *YES*! ${pray}`
 }

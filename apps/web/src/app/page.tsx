@@ -76,7 +76,7 @@ const STEPS = [
     num: '03',
     icon: '🚀',
     title: 'Go Live in 24 Hours',
-    desc: 'Pay ₹499/month and your clinic website goes live the same day. No tech skills needed.',
+    desc: 'Pay ₹299/month and your clinic website goes live the same day. No tech skills needed.',
   },
 ]
 
@@ -121,7 +121,7 @@ const TESTIMONIALS = [
 const FAQS = [
   {
     q: 'Is there a setup fee?',
-    a: 'No. We build your demo website completely free. You only pay ₹499/month when you decide to go live.',
+    a: 'No. We build your demo website completely free. You only pay ₹299/month when you decide to go live.',
   },
   {
     q: 'Can I update my website content?',
@@ -234,7 +234,7 @@ export default function LandingPage() {
             </h1>
             <p className="text-lg text-gray-600 mb-8 leading-relaxed">
               We build it for free. You go live in 24 hours.<br />
-              <span className="font-bold text-gray-900">₹499/month.</span> Cancel anytime.
+              <span className="font-bold text-gray-900">₹299/month.</span> Cancel anytime.
             </p>
             <div className="flex flex-wrap gap-4">
               <a
@@ -369,49 +369,81 @@ export default function LandingPage() {
 
       {/* ── PRICING ──────────────────────────────────────────────────────── */}
       <section id="pricing" className="py-20 px-4 bg-white">
-        <div className="max-w-lg mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
           <p className="text-xs uppercase tracking-widest text-blue-600 font-semibold mb-2">Simple Pricing</p>
-          <h2 className="text-3xl font-black text-gray-900 mb-10">One Plan. Everything Included.</h2>
-          <div className="bg-blue-600 rounded-2xl p-8 text-white relative overflow-hidden shadow-2xl shadow-blue-200">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500 rounded-full translate-x-1/2 -translate-y-1/2 opacity-50" />
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 bg-blue-500 text-blue-100 text-xs font-semibold px-3 py-1 rounded-full mb-5">
-                Most Popular
+          <h2 className="text-3xl font-black text-gray-900 mb-2">Everything Included. No Hidden Fees.</h2>
+          <p className="text-gray-500 mb-10">Save more when you commit longer — cancel anytime.</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+
+            {/* Monthly */}
+            <div className="rounded-2xl border-2 border-gray-200 p-7 text-left bg-white hover:border-blue-300 transition-colors">
+              <p className="text-sm font-semibold text-gray-500 mb-4">Monthly</p>
+              <div className="mb-1">
+                <span className="text-4xl font-black text-gray-900">₹299</span>
+                <span className="text-gray-400 text-sm">/month</span>
               </div>
-              <div className="mb-6">
-                <span className="text-5xl font-black">₹499</span>
-                <span className="text-blue-200 text-lg">/month</span>
-              </div>
-              <ul className="text-left space-y-3 mb-8 text-sm">
-                {[
-                  'Custom clinic website with your branding',
-                  'WhatsApp booking button',
-                  'Google Maps integration',
-                  'Appointment booking form',
-                  '6 premium templates to choose from',
-                  'Personal dashboard to manage everything',
-                  'SSL certificate (HTTPS)',
-                  'Mobile responsive design',
-                  'Free demo before you pay',
-                  'Go live in 24 hours',
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-2.5">
-                    <svg className="w-4 h-4 text-green-300 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-blue-50">{item}</span>
+              <p className="text-xs text-gray-400 mb-6">Billed monthly</p>
+              <a href="#contact" className="block w-full text-center bg-gray-900 text-white font-semibold py-3 rounded-xl text-sm hover:bg-gray-700 transition-colors mb-6">
+                Get Started
+              </a>
+              <ul className="space-y-2.5 text-sm text-gray-600">
+                {['Custom clinic website','WhatsApp booking button','6 premium templates','Dashboard & analytics','SSL + Mobile responsive','Free demo before you pay'].map((f, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    {f}
                   </li>
                 ))}
               </ul>
-              <a
-                href="#contact"
-                className="block w-full bg-white text-blue-700 font-bold py-3.5 rounded-xl text-sm hover:bg-blue-50 transition-colors"
-              >
-                🚀 Get Your Free Demo
-              </a>
-              <p className="text-blue-200 text-xs mt-4 text-center">No hidden charges. Cancel anytime.</p>
             </div>
+
+            {/* 6 Months — Popular */}
+            <div className="rounded-2xl border-2 border-blue-600 p-7 text-left bg-blue-600 text-white relative shadow-2xl shadow-blue-200 scale-105">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs font-black px-4 py-1 rounded-full">
+                MOST POPULAR
+              </div>
+              <p className="text-sm font-semibold text-blue-200 mb-4">6 Months</p>
+              <div className="mb-1">
+                <span className="text-4xl font-black">₹1,499</span>
+              </div>
+              <p className="text-xs text-blue-200 mb-1">₹250/month · billed once</p>
+              <p className="text-xs font-bold text-yellow-300 mb-6">🎉 1 month FREE</p>
+              <a href="#contact" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl text-sm hover:bg-blue-50 transition-colors mb-6">
+                🚀 Get Started
+              </a>
+              <ul className="space-y-2.5 text-sm text-blue-100">
+                {['Custom clinic website','WhatsApp booking button','6 premium templates','Dashboard & analytics','SSL + Mobile responsive','Free demo before you pay'].map((f, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Yearly */}
+            <div className="rounded-2xl border-2 border-gray-200 p-7 text-left bg-white hover:border-blue-300 transition-colors">
+              <p className="text-sm font-semibold text-gray-500 mb-4">1 Year</p>
+              <div className="mb-1">
+                <span className="text-4xl font-black text-gray-900">₹2,399</span>
+              </div>
+              <p className="text-xs text-gray-400 mb-1">₹200/month · billed once</p>
+              <p className="text-xs font-bold text-green-600 mb-6">🎁 4 months FREE</p>
+              <a href="#contact" className="block w-full text-center bg-gray-900 text-white font-semibold py-3 rounded-xl text-sm hover:bg-gray-700 transition-colors mb-6">
+                Best Value
+              </a>
+              <ul className="space-y-2.5 text-sm text-gray-600">
+                {['Custom clinic website','WhatsApp booking button','6 premium templates','Dashboard & analytics','SSL + Mobile responsive','Free demo before you pay'].map((f, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
           </div>
+          <p className="text-gray-400 text-xs mt-8">No hidden charges. Cancel anytime. Free demo — no payment needed upfront.</p>
         </div>
       </section>
 

@@ -56,7 +56,7 @@ ${check} WhatsApp booking button
 ${check} Services, gallery & doctor profile
 ${check} 6+ professional designs to pick from
 
-${star} *Just \u20B9499/month.* No setup fee. Cancel anytime. ${target}
+${star} *Just \u20B9299/month.* No setup fee. Cancel anytime. ${target}
 
 View the demo, pick your favourite design — no payment needed upfront!
 
@@ -97,7 +97,7 @@ function buildWAUrl(
     E.check + enc(' WhatsApp booking button\n') +
     E.check + enc(' Services, gallery & doctor profile\n') +
     E.check + enc(' 6+ professional designs to pick from\n') +
-    enc('\n') + E.star + enc(' *Just \u20B9499/month.* No setup fee. Cancel anytime. ') + E.target +
+    enc('\n') + E.star + enc(' *Just \u20B9299/month.* No setup fee. Cancel anytime. ') + E.target +
     enc('\n\nView the demo, pick your favourite design — no payment needed upfront!\n\nReply *YES*! ') + E.pray
   )
   return `https://api.whatsapp.com/send?phone=91${phone}&text=${text}`
