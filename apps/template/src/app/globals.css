@@ -24,19 +24,81 @@
   --hero-accent: rgba(255,255,255,0.18);
 }
 
-html {
-  scroll-behavior: smooth;
+html { scroll-behavior: smooth; }
+
+/* ── Scroll-reveal animations ─────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s cubic-bezier(0.16,1,0.3,1), transform 0.65s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.18s; }
+.reveal-delay-3 { transition-delay: 0.26s; }
+.reveal-delay-4 { transition-delay: 0.34s; }
+.reveal-delay-5 { transition-delay: 0.42s; }
+.reveal-delay-6 { transition-delay: 0.50s; }
+
+/* ── Hero animated gradient (Prestige / Pulse) ───────────────────────────── */
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.hero-animated-bg {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
 }
 
-/* Dashboard section highlight — triggered via postMessage */
+/* ── Pulse rings (Pulse theme) ───────────────────────────────────────────── */
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.pulse-ring-2 { animation-delay: 0.8s; }
+.pulse-ring-3 { animation-delay: 1.6s; }
+
+/* ── Floating animation (Prestige hero icon) ─────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+.float-anim { animation: float 4s ease-in-out infinite; }
+
+/* ── Counter fade-in ─────────────────────────────────────────────────────── */
+@keyframes count-up {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.count-appear { animation: count-up 0.5s ease-out forwards; }
+
+/* ── Card hover glow ─────────────────────────────────────────────────────── */
+.card-glow:hover {
+  box-shadow: 0 0 0 2px var(--primary), 0 8px 24px rgba(0,0,0,0.10);
+}
+
+/* ── Dashboard section highlight ─────────────────────────────────────────── */
 .section-highlight {
   outline: 3px solid #FBBF24 !important;
   outline-offset: 2px;
   animation: section-pulse 1.2s ease-out forwards;
 }
-
 @keyframes section-pulse {
   0%   { outline-color: #FBBF24; outline-width: 3px; }
   60%  { outline-color: #F59E0B; outline-width: 4px; }
   100% { outline-color: transparent; outline-width: 0; }
 }
+
+/* ── Announcement banner scroll ──────────────────────────────────────────── */
+@keyframes marquee {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(-100%); }
+}
+.marquee-text { animation: marquee 18s linear infinite; }

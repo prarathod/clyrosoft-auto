@@ -10,6 +10,8 @@ import Footer from '@/components/Footer'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import DemoBanner from '@/components/DemoBanner'
 import SectionHighlighter from '@/components/SectionHighlighter'
+import ScrollRevealInit from '@/components/ScrollRevealInit'
+import AnnouncementBanner from '@/components/AnnouncementBanner'
 
 interface Props {
   children: React.ReactNode
@@ -21,15 +23,16 @@ export default async function ClinicLayout({ children, params }: Props) {
   if (!clinic) notFound()
 
   const config = await getProfessionConfig(clinic.profession_type)
-  // Use clinic-level theme override if set, else profession config default
-  const theme = getTheme(clinic.theme ?? config.theme)
+  const theme  = getTheme(clinic.theme ?? config.theme)
 
   return (
     <ThemeProvider initialTheme={theme.key}>
+      <ScrollRevealInit />
+      <SectionHighlighter />
+      {clinic.announcement && <AnnouncementBanner text={clinic.announcement} />}
       {clinic.status === 'demo' && (
         <DemoBanner clinicName={clinic.clinic_name} subdomain={params.subdomain} />
       )}
-      <SectionHighlighter />
       <Navbar clinic={clinic} config={config} theme={theme} />
       {children}
       <div data-section="footer"><Footer clinic={clinic} config={config} /></div>

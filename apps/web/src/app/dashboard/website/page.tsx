@@ -7,33 +7,42 @@ import dynamic from 'next/dynamic'
 const PreviewPane = dynamic(() => import('@/components/dashboard/PreviewPane'), { ssr: false })
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface Testimonial { name: string; text: string; treatment: string }
-interface Doctor { name: string; qualification: string; bio: string; photo: string }
+interface Testimonial  { name: string; text: string; treatment: string }
+interface Doctor       { name: string; qualification: string; bio: string; photo: string }
+interface ClinicStat   { label: string; value: string }
+interface OpeningHours { label: string; hours: string }
+interface SocialLinks  { instagram?: string; facebook?: string; google?: string; youtube?: string }
 
 // Themes that show a photo on the right side of the hero
-const HERO_PHOTO_THEMES = new Set(['modern', 'vitality'])
+const HERO_PHOTO_THEMES = new Set(['modern', 'vitality', 'pulse'])
 
 // ── Theme options ─────────────────────────────────────────────────────────────
 const THEMES = [
-  { key: 'classic',  label: 'Classic',  desc: 'Blue · Serif · Centered',    color: '#2563EB', heroBg: 'linear-gradient(135deg,#1D4ED8,#3B82F6)', heroText: 'white' },
-  { key: 'modern',   label: 'Modern',   desc: 'Dark · Bold · Split',         color: '#8B5CF6', heroBg: 'linear-gradient(135deg,#1E1B4B,#7C3AED)', heroText: 'white' },
-  { key: 'minimal',  label: 'Minimal',  desc: 'Black & White · Clean',       color: '#18181B', heroBg: '#FAFAFA',                                 heroText: '#09090B' },
-  { key: 'vitality', label: 'Vitality', desc: 'Green · Fresh · Health',      color: '#059669', heroBg: 'linear-gradient(135deg,#D1FAE5,#ECFDF5)', heroText: '#111827' },
-  { key: 'elegant',  label: 'Elegant',  desc: 'Navy · Gold · Luxury',        color: '#B45309', heroBg: 'linear-gradient(160deg,#0F172A,#1E293B)', heroText: '#FEF3C7' },
-  { key: 'warm',     label: 'Warm',     desc: 'Coral · Friendly · Rounded',  color: '#E11D48', heroBg: 'linear-gradient(135deg,#FF6B6B,#9F1239)', heroText: 'white' },
+  { key: 'classic',  label: 'Classic',  desc: 'Blue · Serif · Centered',       color: '#2563EB', heroBg: 'linear-gradient(135deg,#1D4ED8,#3B82F6)', heroText: 'white' },
+  { key: 'modern',   label: 'Modern',   desc: 'Dark · Bold · Split',            color: '#8B5CF6', heroBg: 'linear-gradient(135deg,#1E1B4B,#7C3AED)', heroText: 'white' },
+  { key: 'minimal',  label: 'Minimal',  desc: 'Black & White · Clean',          color: '#18181B', heroBg: '#FAFAFA',                                 heroText: '#09090B' },
+  { key: 'vitality', label: 'Vitality', desc: 'Green · Fresh · Health',         color: '#059669', heroBg: 'linear-gradient(135deg,#D1FAE5,#ECFDF5)', heroText: '#111827' },
+  { key: 'elegant',  label: 'Elegant',  desc: 'Navy · Gold · Luxury',           color: '#B45309', heroBg: 'linear-gradient(160deg,#0F172A,#1E293B)', heroText: '#FEF3C7' },
+  { key: 'warm',     label: 'Warm',     desc: 'Coral · Friendly · Rounded',     color: '#E11D48', heroBg: 'linear-gradient(135deg,#FF6B6B,#9F1239)', heroText: 'white' },
+  { key: 'prestige', label: 'Prestige', desc: 'Dark · Silver · Ultra-Luxury',   color: '#A8A29E', heroBg: 'linear-gradient(160deg,#080808,#131211)', heroText: '#F5F5F4' },
+  { key: 'pulse',    label: 'Pulse',    desc: 'Sky Blue · Medical-Tech · Split', color: '#0EA5E9', heroBg: 'linear-gradient(140deg,#0EA5E9,#075985)', heroText: 'white' },
 ]
 
 // ── Section definitions ───────────────────────────────────────────────────────
 const SECTIONS = [
-  { id: 'template',     icon: '🎨', label: 'Template',     hint: 'Overall colour & layout style' },
-  { id: 'hero',         icon: '🦸', label: 'Hero',         hint: 'Top banner — tagline & buttons' },
+  { id: 'template',     icon: '🎨', label: 'Template',        hint: 'Overall colour & layout style' },
+  { id: 'hero',         icon: '🦸', label: 'Hero',            hint: 'Top banner — tagline & buttons' },
+  { id: 'stats',        icon: '📊', label: 'Stats & Trust',   hint: 'Years, patients, rating shown on hero' },
+  { id: 'announcement', icon: '📢', label: 'Announcement',    hint: 'Highlighted message bar at top' },
   { id: 'about',        icon: '👨‍⚕️', label: 'About / Doctors', hint: 'Doctor profiles & clinic story' },
-  { id: 'photos',       icon: '🖼️', label: 'Photos',       hint: 'Clinic photos shown in gallery' },
-  { id: 'services',     icon: '🏥', label: 'Services',     hint: 'List of treatments you offer' },
-  { id: 'testimonials', icon: '⭐', label: 'Testimonials', hint: 'Patient reviews' },
-  { id: 'booking',      icon: '📅', label: 'Booking',      hint: 'Appointment form' },
-  { id: 'contact',      icon: '📞', label: 'Contact',      hint: 'Phone & Google Maps link' },
-  { id: 'footer',       icon: '🦶', label: 'Footer',       hint: 'Bottom of the website' },
+  { id: 'photos',       icon: '🖼️', label: 'Photos',          hint: 'Clinic photos shown in gallery' },
+  { id: 'services',     icon: '🏥', label: 'Services',        hint: 'List of treatments you offer' },
+  { id: 'testimonials', icon: '⭐', label: 'Testimonials',    hint: 'Patient reviews' },
+  { id: 'booking',      icon: '📅', label: 'Booking',         hint: 'Appointment form' },
+  { id: 'contact',      icon: '📞', label: 'Contact',         hint: 'Phone & Google Maps link' },
+  { id: 'hours',        icon: '🕐', label: 'Opening Hours',   hint: 'Clinic timings shown in footer' },
+  { id: 'social',       icon: '🔗', label: 'Social Links',    hint: 'Instagram, Facebook, Google Reviews' },
+  { id: 'footer',       icon: '🦶', label: 'Footer',          hint: 'Bottom of the website' },
 ]
 
 // ── Accordion section wrapper ─────────────────────────────────────────────────
