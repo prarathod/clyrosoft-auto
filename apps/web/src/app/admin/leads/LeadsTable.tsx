@@ -9,6 +9,7 @@ interface Lead {
   clinic_name: string
   doctor_name: string
   phone: string
+  email?: string | null
   city: string
   area?: string | null
   created_at: string
@@ -17,7 +18,33 @@ interface Lead {
   profession_type?: string | null
   photos?: string[] | null
   wa_invalid?: boolean | null
+  lead_status?: string | null
+  login_password?: string | null
 }
+
+interface ActivityRow {
+  lead_id: string
+  employee_name: string
+  activity_type: string
+  note: string | null
+  created_at: string
+}
+
+const STATUS_OPTIONS = [
+  { value: 'new',            label: 'New',            color: 'bg-gray-800 text-gray-400'    },
+  { value: 'interested',     label: 'Interested',     color: 'bg-blue-900 text-blue-300'    },
+  { value: 'not_interested', label: 'Not Interested', color: 'bg-red-950 text-red-400'      },
+  { value: 'callback',       label: 'Callback',       color: 'bg-yellow-900 text-yellow-300' },
+  { value: 'paid',           label: 'Paid',           color: 'bg-emerald-900 text-emerald-400' },
+]
+
+function statusStyle(s?: string | null) {
+  return STATUS_OPTIONS.find(o => o.value === (s ?? 'new'))?.color ?? 'bg-gray-800 text-gray-400'
+}
+function statusLabel(s?: string | null) {
+  return STATUS_OPTIONS.find(o => o.value === (s ?? 'new'))?.label ?? 'New'
+}
+const activityIcon = (t: string) => t === 'call' ? '📞' : t === 'whatsapp' ? '💬' : t === 'demo_created' ? '⚡' : '📝'
 
 const CLINIQO_URL = process.env.NEXT_PUBLIC_TEMPLATE_URL || 'https://cliniqo.in'
 
@@ -103,12 +130,14 @@ function buildWAUrl(
   return `https://api.whatsapp.com/send?phone=91${phone}&text=${text}`
 }
 
-export default function LeadsTable({ leads }: { leads: Lead[] }) {
+export default function LeadsTable({ leads, activityMap }: { leads: Lead[]; activityMap: Record<string, ActivityRow[]> }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [creatingDemo, setCreatingDemo] = useState<string | null>(null)
   const [localDemoUrls, setLocalDemoUrls] = useState<Record<string, string>>({})
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({})
   // Optimistic local state — updates instantly without waiting for router.refresh()
   const [localContacted, setLocalContacted] = useState<Set<string>>(new Set())
   const [localWaSent, setLocalWaSent] = useState<Set<string>>(new Set())
@@ -119,6 +148,15 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
   function isContacted(lead: Lead) { return localContacted.has(lead.id) || !!lead.contacted }
   function isWaInvalid(lead: Lead) { return localWaInvalid.has(lead.id) }
   function isWaSent(lead: Lead)    { return localWaSent.has(lead.id) }
+
+  async function updateStatus(leadId: string, value: string) {
+    setLocalStatuses(prev => ({ ...prev, [leadId]: value }))
+    await fetch(`/api/leads/${leadId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_status: value }),
+    })
+  }
 
   async function markContacted(id: string) {
     setLocalContacted((prev) => new Set(prev).add(id))
@@ -193,107 +231,141 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="border-b border-gray-800">
-            <tr>
-              {['Clinic', 'Doctor', 'Phone', 'City', 'Date', 'Status', 'Actions'].map((h) => (
-                <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-800">
-            {leads.map((lead) => (
-              <tr key={lead.id} className="hover:bg-gray-800/50 transition-colors">
-                <td className="px-4 py-3 font-medium text-white">{lead.clinic_name}</td>
-                <td className="px-4 py-3 text-gray-300">Dr. {lead.doctor_name}</td>
-                <td className="px-4 py-3">
-                  <a href={`tel:+91${lead.phone}`} className="text-blue-400 hover:underline">{lead.phone}</a>
-                </td>
-                <td className="px-4 py-3 text-gray-400">{lead.city}</td>
-                <td className="px-4 py-3 text-gray-500 text-xs">
+    <div className="space-y-2">
+      {leads.map((lead) => {
+        const isExp = expanded === lead.id
+        const activities = activityMap[lead.id] ?? []
+        const currentStatus = localStatuses[lead.id] ?? lead.lead_status ?? 'new'
+        const demoUrl = localDemoUrls[lead.id] ?? lead.demo_url
+
+        return (
+          <div key={lead.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            {/* Main row */}
+            <div className="px-4 py-3 flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-white text-sm">{lead.clinic_name}</span>
+                  {/* Lead status badge */}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${statusStyle(currentStatus)}`}>
+                    {statusLabel(currentStatus)}
+                  </span>
+                  {isContacted(lead) && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-400">Contacted</span>
+                  )}
+                  {demoUrl && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-900 text-blue-400">Demo ready</span>}
+                  {isWaSent(lead) && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-900 text-emerald-400">💬 WA sent</span>}
+                  {isWaInvalid(lead) && <span className="text-xs px-2 py-0.5 rounded-full bg-red-950 text-red-400">❌ Not WA</span>}
+                  {activities.length > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900 text-purple-400">{activities.length} notes</span>
+                  )}
+                </div>
+                <p className="text-gray-400 text-xs mt-0.5">
+                  Dr. {lead.doctor_name} · {lead.city}{lead.area && lead.area !== lead.city ? `, ${lead.area}` : ''}
+                </p>
+                <div className="flex gap-3 mt-0.5">
+                  <a href={`tel:+91${lead.phone}`} className="text-blue-400 text-xs hover:underline">{lead.phone}</a>
                   {new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-col gap-1">
-                    <span className={`text-xs px-2 py-0.5 rounded-full w-fit ${isContacted(lead) ? 'bg-green-900 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
-                      {isContacted(lead) ? 'Contacted' : 'New'}
-                    </span>
-                    {(localDemoUrls[lead.id] ?? lead.demo_url) && (
-                      <span className="text-xs px-2 py-0.5 rounded-full w-fit bg-blue-900 text-blue-400">Demo ready</span>
-                    )}
-                    {isWaSent(lead) && (
-                      <span className="text-xs px-2 py-0.5 rounded-full w-fit bg-emerald-900 text-emerald-400">💬 WA sent</span>
-                    )}
-                    {isWaInvalid(lead) && (
-                      <span className="text-xs px-2 py-0.5 rounded-full w-fit bg-red-950 text-red-400">❌ Not on WA</span>
-                    )}
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                <a
+                  href={`/admin/demo-generator?lead_id=${lead.id}&name=${encodeURIComponent(lead.clinic_name)}&doctor=${encodeURIComponent(lead.doctor_name)}&phone=${lead.phone}&city=${encodeURIComponent(lead.city)}&area=${encodeURIComponent(lead.area ?? '')}`}
+                  className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded-lg transition-colors"
+                >
+                  {demoUrl ? '⚡ Re-demo' : '⚡ Demo'}
+                </a>
+                {demoUrl && (
+                  <a href={demoUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-2.5 py-1.5 rounded-lg transition-colors">
+                    ↗ View
+                  </a>
+                )}
+                <button onClick={() => markContacted(lead.id)} disabled={isContacted(lead)}
+                  className="text-xs bg-green-900 hover:bg-green-800 text-green-400 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40">
+                  ✓ Mark
+                </button>
+                <button onClick={() => openWA(lead)} disabled={creatingDemo === lead.id}
+                  className="text-xs bg-emerald-900 hover:bg-emerald-800 text-emerald-400 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-60">
+                  {creatingDemo === lead.id ? '⏳...' : '💬 WA'}
+                </button>
+                <button onClick={() => toggleWaInvalid(lead)}
+                  className={`text-xs px-2.5 py-1.5 rounded-lg transition-colors ${isWaInvalid(lead) ? 'bg-red-950 text-red-400' : 'bg-gray-800 text-gray-500 hover:text-white'}`}>
+                  {isWaInvalid(lead) ? '❌' : '📵'}
+                </button>
+                <button onClick={() => copyMessage({ ...lead, demo_url: demoUrl })}
+                  className="text-xs bg-yellow-900 hover:bg-yellow-800 text-yellow-400 px-2.5 py-1.5 rounded-lg transition-colors">
+                  {copied === lead.id ? '✓' : '📋'}
+                </button>
+                <button onClick={() => deleteLead(lead.id)} disabled={deleting === lead.id}
+                  className="text-xs bg-red-950 hover:bg-red-900 text-red-400 px-2.5 py-1.5 rounded-lg transition-colors">
+                  🗑
+                </button>
+                <button onClick={() => setExpanded(isExp ? null : lead.id)}
+                  className="text-xs text-gray-500 hover:text-white px-2 py-1.5 rounded-lg hover:bg-gray-800 transition-colors">
+                  {isExp ? '▲' : '▼'}
+                </button>
+              </div>
+            </div>
+
+            {/* Expanded panel */}
+            {isExp && (
+              <div className="border-t border-gray-800 px-4 py-4 space-y-4 bg-gray-800/30">
+
+                {/* Status + Login creds row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Status dropdown */}
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1.5">Lead Status</p>
+                    <select
+                      value={currentStatus}
+                      onChange={e => updateStatus(lead.id, e.target.value)}
+                      className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 w-full"
+                    >
+                      {STATUS_OPTIONS.map(o => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
                   </div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <a
-                      href={`/admin/demo-generator?lead_id=${lead.id}&name=${encodeURIComponent(lead.clinic_name)}&doctor=${encodeURIComponent(lead.doctor_name)}&phone=${lead.phone}&city=${encodeURIComponent(lead.city)}&area=${encodeURIComponent(lead.area ?? '')}`}
-                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg transition-colors"
-                    >
-                      {(localDemoUrls[lead.id] ?? lead.demo_url) ? '⚡ Re-demo' : '⚡ Demo'}
-                    </a>
-                    {(localDemoUrls[lead.id] ?? lead.demo_url) && (
-                      <a
-                        href={localDemoUrls[lead.id] ?? lead.demo_url!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-2.5 py-1 rounded-lg transition-colors"
-                      >
-                        ↗ View
-                      </a>
-                    )}
-                    <button
-                      onClick={() => markContacted(lead.id)}
-                      disabled={isContacted(lead)}
-                      className="text-xs bg-green-900 hover:bg-green-800 text-green-400 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40"
-                    >
-                      ✓ Mark
-                    </button>
-                    <button
-                      onClick={() => openWA(lead)}
-                      disabled={creatingDemo === lead.id}
-                      className="text-xs bg-emerald-900 hover:bg-emerald-800 text-emerald-400 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-60"
-                    >
-                      {creatingDemo === lead.id ? '⏳ Creating...' : '💬 WA'}
-                    </button>
-                    <button
-                      onClick={() => toggleWaInvalid(lead)}
-                      className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${
-                        isWaInvalid(lead)
-                          ? 'bg-red-950 hover:bg-red-900 text-red-400'
-                          : 'bg-gray-800 hover:bg-gray-700 text-gray-500'
-                      }`}
-                      title={isWaInvalid(lead) ? 'Mark as on WA' : 'Mark as not on WA'}
-                    >
-                      {isWaInvalid(lead) ? '❌ Not WA' : '📵 Not WA'}
-                    </button>
-                    <button
-                      onClick={() => copyMessage({ ...lead, demo_url: localDemoUrls[lead.id] ?? lead.demo_url })}
-                      className="text-xs bg-yellow-900 hover:bg-yellow-800 text-yellow-400 px-2.5 py-1 rounded-lg transition-colors"
-                    >
-                      {copied === lead.id ? '✓ Copied!' : '📋 Copy'}
-                    </button>
-                    <button
-                      onClick={() => deleteLead(lead.id)}
-                      disabled={deleting === lead.id}
-                      className="text-xs bg-red-950 hover:bg-red-900 text-red-400 px-2.5 py-1 rounded-lg transition-colors"
-                    >
-                      🗑
-                    </button>
+
+                  {/* Login credentials */}
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1.5">Login Credentials</p>
+                    <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 space-y-1">
+                      <p className="text-xs text-gray-400">Email: <span className="text-white font-mono">{lead.email ?? '—'}</span></p>
+                      <p className="text-xs text-gray-400">Password: <span className="text-white font-mono">{lead.login_password ?? '—'}</span></p>
+                    </div>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </div>
+
+                {/* Activity log */}
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">Activity Log</p>
+                  {activities.length === 0 ? (
+                    <p className="text-xs text-gray-600">No activity logged yet.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {activities.map((a, i) => (
+                        <div key={i} className="flex items-start gap-2 text-xs">
+                          <span>{activityIcon(a.activity_type)}</span>
+                          <div className="flex-1">
+                            <span className="text-gray-300">{a.note ?? a.activity_type}</span>
+                            <span className="text-gray-600 ml-1">· {a.employee_name}</span>
+                          </div>
+                          <span className="text-gray-600 whitespace-nowrap">
+                            {new Date(a.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

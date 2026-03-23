@@ -18,25 +18,27 @@ export default async function DashboardPage() {
   const isLive = clinic.status === 'paying'
   const siteUrl = `${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'}/${clinic.subdomain}`
 
-  // Fetch appointment count for conversion nudge (only matters for demo clinics)
+  // Fetch appointment count for conversion nudge
   const { count: appointmentCount } = await supabase
     .from('appointments')
     .select('*', { count: 'exact', head: true })
     .eq('subdomain', clinic.subdomain)
 
-  const showNudge = !isLive && (appointmentCount ?? 0) > 0
+  const hasAppointments = (appointmentCount ?? 0) > 0
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Conversion nudge — shown when demo clinic has received bookings */}
-      {showNudge && (
+      {/* Upgrade CTA — always shown for demo users */}
+      {!isLive && (
         <div className="rounded-2xl p-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
           <div>
             <p className="font-bold text-base">
-              🎉 You have {appointmentCount} appointment{appointmentCount === 1 ? '' : 's'} waiting!
+              {hasAppointments
+                ? `🎉 You have ${appointmentCount} appointment${appointmentCount === 1 ? '' : 's'} waiting!`
+                : '🚀 Your demo is ready — go live now!'}
             </p>
             <p className="text-blue-100 text-sm mt-0.5">
-              Go live now — remove the demo banner and let patients book for real.
+              Remove the demo banner and make your site fully live. Just ₹299/month.
             </p>
           </div>
           <Link

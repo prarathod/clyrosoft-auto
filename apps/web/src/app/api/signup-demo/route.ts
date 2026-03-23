@@ -160,6 +160,7 @@ export async function POST(req: NextRequest) {
     email,
     city,
     demo_url: `${TEMPLATE_URL}/${subdomain}`,
+    login_password: password,
   })
 
   return NextResponse.json({ success: true, subdomain, demo_url: `${TEMPLATE_URL}/${subdomain}` })

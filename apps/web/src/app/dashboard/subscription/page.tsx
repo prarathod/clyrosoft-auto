@@ -3,37 +3,38 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import Script from 'next/script'
+import { useRouter } from 'next/navigation'
 
 const PLANS = [
   {
     key: 'monthly',
     label: 'Monthly',
-    price: 299,
     display: '₹299',
     per: '/month',
     badge: null,
     savings: null,
     amountPaise: 29900,
+    price: 299,
   },
   {
     key: '6months',
     label: '6 Months',
-    price: 1499,
     display: '₹1,499',
     per: '/ 6 months',
     badge: 'Popular',
-    savings: '1 month FREE  (₹250/mo)',
+    savings: 'Save ₹295 — 1 month FREE  (₹250/mo)',
     amountPaise: 149900,
+    price: 1499,
   },
   {
     key: 'yearly',
     label: '1 Year',
-    price: 2399,
     display: '₹2,399',
     per: '/year',
     badge: 'Best Value',
-    savings: '4 months FREE  (₹200/mo)',
+    savings: 'Save ₹1,189 — 4 months FREE  (₹200/mo)',
     amountPaise: 239900,
+    price: 2399,
   },
 ]
 
@@ -42,6 +43,7 @@ declare global {
 }
 
 export default function SubscriptionPage() {
+  const router = useRouter()
   const [clinic, setClinic] = useState<any>(null)
   const [selectedPlan, setSelectedPlan] = useState('monthly')
   const [loading, setLoading] = useState(false)
@@ -53,7 +55,7 @@ export default function SubscriptionPage() {
       if (!session) return
       supabase
         .from('clients')
-        .select('clinic_name, status, monthly_amount, payment_date, subdomain, email')
+        .select('clinic_name, status, monthly_amount, payment_date, subdomain, email, phone')
         .eq('email', session.user.email!)
         .single()
         .then(({ data }) => { if (data) setClinic(data) })
@@ -80,7 +82,7 @@ export default function SubscriptionPage() {
         name: 'Cliniqo',
         description: `${plan.label} Plan — ${clinic.clinic_name}`,
         order_id: orderId,
-        prefill: { email: clinic.email },
+        prefill: { email: clinic.email, contact: clinic.phone },
         theme: { color: '#2563EB' },
         handler: async (response: any) => {
           const verifyRes = await fetch('/api/payment/verify', {
@@ -99,6 +101,8 @@ export default function SubscriptionPage() {
           if (result.ok) {
             setSuccess(true)
             setClinic((c: any) => ({ ...c, status: 'paying' }))
+            // Refresh dashboard after 3 seconds
+            setTimeout(() => router.push('/dashboard'), 3000)
           }
           setLoading(false)
         },
@@ -118,27 +122,39 @@ export default function SubscriptionPage() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-5">
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-1">Subscription</h2>
-          <p className="text-sm text-gray-500">Choose a plan to go live and remove the demo banner.</p>
+          <p className="text-sm text-gray-500">Choose a plan to go live and remove the demo banner from your site.</p>
         </div>
 
-        {(isLive || success) && (
+        {/* Success state */}
+        {success && (
+          <div className="rounded-2xl p-6 border-2 border-green-300 bg-green-50 text-center space-y-2">
+            <p className="text-3xl">🎉</p>
+            <p className="font-bold text-green-800 text-lg">Payment successful! Your site is now LIVE.</p>
+            <p className="text-sm text-green-700">The demo banner has been removed. Redirecting to dashboard…</p>
+          </div>
+        )}
+
+        {/* Already paying */}
+        {!success && isLive && (
           <div className="rounded-2xl p-5 border-2 border-green-300 bg-green-50 flex items-center gap-4">
-            <span className="text-2xl">{success ? '🎉' : '✅'}</span>
+            <span className="text-2xl">✅</span>
             <div>
-              <p className="font-bold text-green-800">{success ? 'Payment successful! Your site is now LIVE.' : 'Your site is LIVE'}</p>
+              <p className="font-bold text-green-800">Your site is LIVE</p>
               <p className="text-sm text-green-700 mt-0.5">
-                {success
-                  ? 'The demo banner has been removed from your site.'
-                  : `Plan active · ₹${clinic.monthly_amount}/month${clinic.payment_date ? ` · Last paid ${new Date(clinic.payment_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}`}
+                ₹{clinic.monthly_amount}/month
+                {clinic.payment_date
+                  ? ` · Paid on ${new Date(clinic.payment_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                  : ''}
               </p>
             </div>
           </div>
         )}
 
-        {!isLive && (
+        {/* Plan selection */}
+        {!isLive && !success && (
           <>
             <div className="space-y-3">
               {PLANS.map((plan) => (
@@ -146,7 +162,9 @@ export default function SubscriptionPage() {
                   key={plan.key}
                   onClick={() => setSelectedPlan(plan.key)}
                   className={`relative cursor-pointer rounded-xl border-2 p-5 transition-all ${
-                    selectedPlan === plan.key ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                    selectedPlan === plan.key
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
                 >
                   {plan.badge && (
@@ -182,26 +200,29 @@ export default function SubscriptionPage() {
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-base transition-colors"
             >
-              {loading ? 'Opening payment…' : `Pay ${PLANS.find(p => p.key === selectedPlan)?.display} with Razorpay`}
+              {loading ? 'Opening payment…' : `Pay ${PLANS.find(p => p.key === selectedPlan)?.display} →`}
             </button>
-            <p className="text-xs text-center text-gray-400">Secured by Razorpay · UPI, Cards, Net Banking, Wallets accepted</p>
+            <p className="text-xs text-center text-gray-400">
+              Secured by Razorpay · UPI, Cards, Net Banking, Wallets accepted
+            </p>
           </>
         )}
 
+        {/* What you get */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <h3 className="font-semibold text-gray-900 mb-4">What you get</h3>
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2 text-sm text-gray-700">
             {[
-              [true,  'Custom clinic website with your branding'],
-              [true,  'WhatsApp booking button'],
-              [true,  'Services, testimonials & doctor bio'],
-              [true,  'Analytics dashboard'],
-              [true,  'Appointment booking from your site'],
-              [isLive, isLive ? 'No demo banner — fully live' : 'Remove demo banner (upgrade to go live)'],
-              [isLive, isLive ? 'Priority support' : 'Priority support (upgrade)'],
-            ].map(([included, text], i) => (
-              <li key={i} className={`flex items-center gap-2 ${!included ? 'text-gray-400' : 'text-gray-700'}`}>
-                <span>{included ? '✓' : '○'}</span>{text as string}
+              'Custom clinic website with your branding',
+              'WhatsApp booking button',
+              'Services, testimonials & doctor bio',
+              'Analytics dashboard',
+              'Appointment booking from your site',
+              'No demo banner — fully live site',
+              'Priority support',
+            ].map((text) => (
+              <li key={text} className="flex items-center gap-2">
+                <span className="text-green-500 font-bold">✓</span>{text}
               </li>
             ))}
           </ul>

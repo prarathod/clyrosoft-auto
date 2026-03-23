@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     // Mark client as paying
     const supabase = getAdminSupabase()
-    const { error } = await supabase
+    const { data: client, error } = await supabase
       .from('clients')
       .update({
         status: 'paying',
@@ -41,10 +41,22 @@ export async function POST(request: Request) {
         payment_date: new Date().toISOString(),
       })
       .eq('subdomain', subdomain)
+      .select('email, phone')
+      .single()
 
     if (error) {
       console.error('Supabase update error:', error)
       return NextResponse.json({ error: 'DB update failed' }, { status: 500 })
+    }
+
+    // Also mark the matching lead as paid (so sales dashboard stays in sync)
+    if (client?.email || client?.phone) {
+      const leadQuery = supabase.from('leads').update({ lead_status: 'paid', contacted: true })
+      if (client.email) {
+        await leadQuery.eq('email', client.email)
+      } else {
+        await leadQuery.eq('phone', client.phone)
+      }
     }
 
     return NextResponse.json({ ok: true })

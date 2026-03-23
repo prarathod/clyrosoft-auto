@@ -8,13 +8,24 @@ interface Lead {
   clinic_name: string
   doctor_name: string
   phone: string
+  email?: string | null
   city: string
   area?: string | null
   created_at: string
   contacted?: boolean
   demo_url?: string | null
   wa_invalid?: boolean | null
+  lead_status?: string | null
+  login_password?: string | null
 }
+
+const STATUS_OPTIONS = [
+  { value: 'new',            label: 'New'            },
+  { value: 'interested',     label: 'Interested'     },
+  { value: 'not_interested', label: 'Not Interested' },
+  { value: 'callback',       label: 'Callback'       },
+  { value: 'paid',           label: 'Paid'           },
+]
 
 interface Activity {
   lead_id: string
@@ -60,9 +71,25 @@ export default function SalesLeadsTable({
   const [logging, setLogging] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'new' | 'contacted' | 'demo'>('all')
+  // Local activity state so notes appear instantly without waiting for router.refresh()
+  const [localActivities, setLocalActivities] = useState<Record<string, Activity[]>>(
+    Object.fromEntries(Object.entries(activityMap).map(([k, v]) => [k, v ?? []]))
+  )
+  const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({})
 
   async function logActivity(leadId: string, type: string, note?: string) {
     setLogging(`${leadId}-${type}`)
+    // Optimistically add to local state so it shows immediately
+    const newActivity: Activity = {
+      lead_id: leadId,
+      activity_type: type,
+      note: note ?? null,
+      created_at: new Date().toISOString(),
+    }
+    setLocalActivities(prev => ({
+      ...prev,
+      [leadId]: [newActivity, ...(prev[leadId] ?? [])],
+    }))
     await fetch('/api/sales/activity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -70,6 +97,15 @@ export default function SalesLeadsTable({
     })
     setLogging(null)
     router.refresh()
+  }
+
+  async function updateStatus(leadId: string, value: string) {
+    setLocalStatuses(prev => ({ ...prev, [leadId]: value }))
+    await fetch(`/api/leads/${leadId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_status: value }),
+    })
   }
 
   async function openWA(lead: Lead) {
@@ -137,11 +173,12 @@ export default function SalesLeadsTable({
       {/* Table */}
       <div className="space-y-2">
         {filtered.map(lead => {
-          const activities = activityMap[lead.id] ?? []
+          const activities = localActivities[lead.id] ?? []
           const isExpanded = expanded === lead.id
           const isLoggingCall = logging === `${lead.id}-call`
           const isLoggingWA   = logging === `${lead.id}-whatsapp`
           const isLoggingNote = logging === `${lead.id}-note`
+          const currentStatus = localStatuses[lead.id] ?? lead.lead_status ?? 'new'
 
           return (
             <div key={lead.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
@@ -205,44 +242,72 @@ export default function SalesLeadsTable({
                 </div>
               </div>
 
-              {/* Expanded: activity log + add note */}
+              {/* Expanded panel */}
               {isExpanded && (
-                <div className="border-t border-gray-800 px-4 py-3 space-y-3">
-                  {/* Activity history */}
-                  {activities.length > 0 && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Activity Log</p>
-                      {activities.map((a, i) => (
-                        <div key={i} className="flex items-start gap-2 text-xs">
-                          <span>{activityIcon(a.activity_type)}</span>
-                          <div className="flex-1">
-                            <span className="text-gray-300">{a.note ?? a.activity_type}</span>
-                          </div>
-                          <span className="text-gray-600 whitespace-nowrap">
-                            {new Date(a.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div className="border-t border-gray-800 px-4 py-4 space-y-4 bg-gray-800/20">
 
-                  {/* Add note */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Add a note (e.g. called, interested, callback at 5pm)…"
-                      value={noteText}
-                      onChange={e => setNoteText(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') submitNote(lead.id) }}
-                      className="flex-1 bg-gray-800 border border-gray-700 text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                    <button
-                      onClick={() => submitNote(lead.id)}
-                      disabled={isLoggingNote}
-                      className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {isLoggingNote ? '…' : '+ Note'}
-                    </button>
+                  {/* Status + Login creds */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1.5">Lead Status</p>
+                      <select
+                        value={currentStatus}
+                        onChange={e => updateStatus(lead.id, e.target.value)}
+                        className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500 w-full"
+                      >
+                        {STATUS_OPTIONS.map(o => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1.5">Login Email</p>
+                      <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
+                        <p className="text-xs text-gray-400">Email: <span className="text-white font-mono">{lead.email ?? '—'}</span></p>
+                        <p className="text-xs text-gray-400 mt-0.5">Password: <span className="text-white font-mono">{lead.login_password ?? '—'}</span></p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Activity log */}
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">Activity Log</p>
+                    {activities.length === 0 ? (
+                      <p className="text-xs text-gray-600">No activity yet — log a call or note below.</p>
+                    ) : (
+                      <div className="space-y-1.5 mb-3">
+                        {activities.map((a, i) => (
+                          <div key={i} className="flex items-start gap-2 text-xs">
+                            <span>{activityIcon(a.activity_type)}</span>
+                            <div className="flex-1">
+                              <span className="text-gray-300">{a.note ?? a.activity_type}</span>
+                            </div>
+                            <span className="text-gray-600 whitespace-nowrap">
+                              {new Date(a.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add note */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Add a note (e.g. interested, callback at 5pm, asked for price)…"
+                        value={noteText}
+                        onChange={e => setNoteText(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') submitNote(lead.id) }}
+                        className="flex-1 bg-gray-800 border border-gray-700 text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                      <button
+                        onClick={() => submitNote(lead.id)}
+                        disabled={!!isLoggingNote}
+                        className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        {isLoggingNote ? '…' : '+ Note'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

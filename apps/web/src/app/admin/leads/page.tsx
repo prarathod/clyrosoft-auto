@@ -54,6 +54,23 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
   const cities = Array.from(new Set((cityRows ?? []).map(r => r.city).filter(Boolean))).sort()
   const areas  = Array.from(new Set((areaRows  ?? []).map(r => r.area).filter(Boolean))).sort()
 
+  // ── Fetch activities for this page's leads ────────────────────────────
+  const leadIds = (leads ?? []).map(l => l.id)
+  const { data: activities } = leadIds.length > 0
+    ? await supabaseAdmin
+        .from('lead_activities')
+        .select('lead_id, employee_name, activity_type, note, created_at')
+        .in('lead_id', leadIds)
+        .order('created_at', { ascending: false })
+    : { data: [] }
+
+  type ActivityRow = { lead_id: string; employee_name: string; activity_type: string; note: string | null; created_at: string }
+  const activityMap: Record<string, ActivityRow[]> = {}
+  for (const a of (activities ?? []) as ActivityRow[]) {
+    if (!activityMap[a.lead_id]) activityMap[a.lead_id] = []
+    activityMap[a.lead_id]!.push(a)
+  }
+
   return (
     <div className="max-w-6xl mx-auto space-y-4">
       <div>
@@ -67,7 +84,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
 
       {leads && leads.length > 0 ? (
         <>
-          <LeadsTable leads={leads} />
+          <LeadsTable leads={leads} activityMap={activityMap} />
           <Suspense>
             <LeadsPagination page={page} totalPages={totalPages} />
           </Suspense>
