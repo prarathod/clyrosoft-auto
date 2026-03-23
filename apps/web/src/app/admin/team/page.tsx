@@ -2,154 +2,186 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export const dynamic = 'force-dynamic'
 
-const SALES_EMAIL = process.env.SALES_EMAIL ?? 'rahul@gmail.com'
-const SALES_NAME  = process.env.SALES_NAME  ?? 'Rahul'
-
 export default async function AdminTeamPage() {
-  // Last 7 days of activity
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  // Fetch all sales employees
+  const { data: employees } = await supabaseAdmin
+    .from('sales_employees')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at')
 
-  const { data: activities } = await supabaseAdmin
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
+  const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+  // Fetch all activities for last 7 days
+  const { data: recentActivities } = await supabaseAdmin
     .from('lead_activities')
-    .select('action, created_at, lead_id, note, leads(clinic_name, doctor_name, phone, city)')
-    .eq('employee_email', SALES_EMAIL)
+    .select('employee_email, employee_name, activity_type, note, created_at, lead_id')
     .gte('created_at', sevenDaysAgo.toISOString())
     .order('created_at', { ascending: false })
 
-  // Today's activity
-  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
-  const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999)
-  const todayActivities = (activities ?? []).filter(a =>
-    new Date(a.created_at) >= todayStart && new Date(a.created_at) <= todayEnd
-  )
-
-  // All-time commission stats
-  const { data: allActivity } = await supabaseAdmin
+  // All-time activities per employee for commission calc
+  const { data: allActivities } = await supabaseAdmin
     .from('lead_activities')
-    .select('lead_id')
-    .eq('employee_email', SALES_EMAIL)
+    .select('employee_email, lead_id, activity_type')
 
-  const uniqueLeadIds = [...new Set((allActivity ?? []).map(r => r.lead_id))]
+  // Get all lead phones for conversion matching
+  const allLeadIds = [...new Set((allActivities ?? []).map(a => a.lead_id))]
+  const { data: allLeads } = allLeadIds.length > 0
+    ? await supabaseAdmin.from('leads').select('id, phone, clinic_name, doctor_name, city').in('id', allLeadIds)
+    : { data: [] }
+  const leadMap = Object.fromEntries((allLeads ?? []).map(l => [l.id, l]))
 
-  let convertedCount = 0
-  if (uniqueLeadIds.length > 0) {
-    const { data: leadPhones } = await supabaseAdmin
-      .from('leads').select('phone').in('id', uniqueLeadIds)
-    if (leadPhones?.length) {
-      const { count } = await supabaseAdmin
-        .from('clients').select('*', { count: 'exact', head: true })
-        .in('phone', leadPhones.map(l => l.phone)).eq('status', 'paying')
-      convertedCount = count ?? 0
-    }
-  }
+  // Get paying clients phones
+  const { data: payingClients } = await supabaseAdmin
+    .from('clients').select('phone').eq('status', 'paying')
+  const payingPhones = new Set((payingClients ?? []).map(c => c.phone))
 
-  const totalCommission = uniqueLeadIds.length * 200 + convertedCount * 500
+  // Per-employee stats
+  const empStats = (employees ?? []).map(emp => {
+    const myActivities = (allActivities ?? []).filter(a => a.employee_email === emp.email)
+    const myRecent     = (recentActivities ?? []).filter(a => a.employee_email === emp.email)
 
-  // Group activities by date for the 7-day breakdown
-  const byDate: Record<string, typeof activities> = {}
-  for (const a of activities ?? []) {
+    const todayActs  = myRecent.filter(a => new Date(a.created_at) >= todayStart)
+    const monthActs  = (allActivities ?? []).filter(a =>
+      a.employee_email === emp.email && new Date(a.created_at) >= monthStart
+    )
+
+    const todayCalls = todayActs.filter(a => a.activity_type === 'call').length
+    const todayWA    = todayActs.filter(a => a.activity_type === 'whatsapp').length
+
+    const monthContactedLeads = new Set(
+      monthActs
+        .filter(a => a.activity_type === 'call' || a.activity_type === 'whatsapp')
+        .map(a => a.lead_id)
+    )
+
+    const totalContactedLeads = new Set(
+      myActivities
+        .filter(a => a.activity_type === 'call' || a.activity_type === 'whatsapp')
+        .map(a => a.lead_id)
+    )
+
+    // Conversions = leads I contacted that are now paying
+    const myConversions = [...totalContactedLeads].filter(lid => {
+      const lead = leadMap[lid]
+      return lead && payingPhones.has(lead.phone)
+    }).length
+
+    const monthEarnings =
+      monthContactedLeads.size * emp.commission_per_contact +
+      myConversions * emp.commission_per_conversion
+
+    return { emp, todayCalls, todayWA, monthContactedLeads: monthContactedLeads.size, myConversions, monthEarnings, recentActs: myRecent }
+  })
+
+  // Get lead details for recent activities display
+  const recentLeadIds = [...new Set((recentActivities ?? []).map(a => a.lead_id))]
+  const { data: recentLeads } = recentLeadIds.length > 0
+    ? await supabaseAdmin.from('leads').select('id, clinic_name, doctor_name, city').in('id', recentLeadIds)
+    : { data: [] }
+  const recentLeadMap = Object.fromEntries((recentLeads ?? []).map(l => [l.id, l]))
+
+  // Group recent activities by date
+  const byDate: Record<string, typeof recentActivities> = {}
+  for (const a of recentActivities ?? []) {
     const d = a.created_at.slice(0, 10)
     if (!byDate[d]) byDate[d] = []
     byDate[d]!.push(a)
   }
 
-  function fmt(iso: string) {
-    return new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-  }
+  const actIcon = (t: string) => t === 'call' ? '📞' : t === 'whatsapp' ? '💬' : t === 'demo_created' ? '⚡' : '📝'
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Team — {SALES_NAME}</h1>
-        <p className="text-gray-400 text-sm mt-1">{SALES_EMAIL} · Sales Representative</p>
+        <h1 className="text-2xl font-black text-white mb-1">Team Performance</h1>
+        <p className="text-gray-400 text-sm">{(employees ?? []).length} active sales employees</p>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: "Today's Calls",    value: todayActivities.filter(a => a.action === 'called').length,   color: 'text-blue-400' },
-          { label: "Today's WA",       value: todayActivities.filter(a => a.action === 'wa_sent').length,  color: 'text-green-400' },
-          { label: 'Total Connected',  value: uniqueLeadIds.length,                                         color: 'text-yellow-400' },
-          { label: 'Paid Conversions', value: convertedCount,                                               color: 'text-purple-400' },
-        ].map((s) => (
-          <div key={s.label} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-gray-400 text-xs mt-1">{s.label}</p>
+      {/* Per-employee cards */}
+      <div className="space-y-4">
+        {empStats.map(({ emp, todayCalls, todayWA, monthContactedLeads, myConversions, monthEarnings }) => (
+          <div key={emp.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-white font-semibold text-lg">{emp.name}</h2>
+                <p className="text-gray-400 text-sm">{emp.email}</p>
+                <p className="text-gray-500 text-xs mt-0.5">
+                  ₹{emp.commission_per_contact}/contact · ₹{emp.commission_per_conversion}/conversion
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-400">This month earnings</p>
+                <p className="text-2xl font-black text-emerald-400">₹{monthEarnings.toLocaleString('en-IN')}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "Today's Calls", value: todayCalls,           color: 'text-blue-400'   },
+                { label: "Today's WA",    value: todayWA,              color: 'text-emerald-400' },
+                { label: 'Month Contacts',value: monthContactedLeads,  color: 'text-purple-400'  },
+                { label: 'Conversions',   value: myConversions,        color: 'text-yellow-400'  },
+              ].map(s => (
+                <div key={s.label} className="bg-gray-800/50 rounded-lg p-3">
+                  <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">{s.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Commission */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-        <h2 className="text-white font-semibold mb-3">Commission Breakdown</h2>
-        <div className="flex flex-wrap gap-8">
-          <div>
-            <p className="text-gray-400 text-xs">Leads Connected × ₹200</p>
-            <p className="text-blue-300 font-bold text-lg">{uniqueLeadIds.length} × ₹200 = ₹{(uniqueLeadIds.length * 200).toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-xs">Paid Conversions × ₹500</p>
-            <p className="text-purple-300 font-bold text-lg">{convertedCount} × ₹500 = ₹{(convertedCount * 500).toLocaleString()}</p>
-          </div>
-          <div className="sm:ml-auto">
-            <p className="text-gray-400 text-xs">Total Payable</p>
-            <p className="text-green-400 font-bold text-2xl">₹{totalCommission.toLocaleString()}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* 7-day activity log */}
+      {/* 7-day activity feed */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
           <h2 className="text-white font-semibold">Activity — Last 7 Days</h2>
-          <p className="text-gray-500 text-xs">{(activities ?? []).length} actions total</p>
+          <p className="text-gray-500 text-xs">{(recentActivities ?? []).length} actions</p>
         </div>
 
         {Object.keys(byDate).length === 0 ? (
           <p className="text-gray-600 text-sm text-center py-10">No activity in the last 7 days</p>
         ) : (
           <div>
-            {Object.entries(byDate)
-              .sort(([a], [b]) => b.localeCompare(a))
-              .map(([date, acts]) => (
-                <div key={date}>
-                  {/* Date header */}
-                  <div className="px-5 py-2 bg-gray-800/50 flex items-center justify-between">
-                    <p className="text-gray-300 text-xs font-semibold">
-                      {new Date(date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
-                    </p>
-                    <div className="flex gap-3 text-xs text-gray-500">
-                      <span>📞 {acts!.filter(a => a.action === 'called').length} calls</span>
-                      <span>💬 {acts!.filter(a => a.action === 'wa_sent').length} WA</span>
-                    </div>
+            {Object.entries(byDate).sort(([a], [b]) => b.localeCompare(a)).map(([date, acts]) => (
+              <div key={date}>
+                <div className="px-5 py-2 bg-gray-800/50 flex items-center justify-between">
+                  <p className="text-gray-300 text-xs font-semibold">
+                    {new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
+                  <div className="flex gap-3 text-xs text-gray-500">
+                    <span>📞 {acts!.filter(a => a.activity_type === 'call').length}</span>
+                    <span>💬 {acts!.filter(a => a.activity_type === 'whatsapp').length}</span>
+                    <span>📝 {acts!.filter(a => a.activity_type === 'note').length}</span>
                   </div>
-                  {/* Activities */}
-                  <div className="divide-y divide-gray-800/40">
-                    {acts!.map((a, i) => (
+                </div>
+                <div className="divide-y divide-gray-800/40">
+                  {acts!.map((a, i) => {
+                    const lead = recentLeadMap[a.lead_id]
+                    return (
                       <div key={i} className="px-5 py-3 flex items-center justify-between hover:bg-gray-800/20">
                         <div className="flex items-center gap-3">
-                          <span className="text-base">
-                            {a.action === 'called' ? '📞' : a.action === 'wa_sent' ? '💬' : '📝'}
-                          </span>
+                          <span className="text-base">{actIcon(a.activity_type)}</span>
                           <div>
                             <p className="text-white text-sm font-medium">
-                              {(a.leads as { clinic_name: string } | null)?.clinic_name ?? 'Unknown'}
+                              {lead?.clinic_name ?? 'Unknown'} — Dr. {lead?.doctor_name ?? ''}
                             </p>
                             <p className="text-gray-500 text-xs">
-                              Dr. {(a.leads as { doctor_name: string } | null)?.doctor_name} ·{' '}
-                              {(a.leads as { city: string } | null)?.city} ·{' '}
-                              {a.action === 'called' ? 'Called' : a.action === 'wa_sent' ? 'WhatsApp sent' : 'Note'}
-                              {a.note ? ` — "${a.note}"` : ''}
+                              {a.employee_name} · {lead?.city ?? ''}{a.note ? ` · "${a.note}"` : ''}
                             </p>
                           </div>
                         </div>
-                        <p className="text-gray-600 text-xs">{fmt(a.created_at)}</p>
+                        <p className="text-gray-600 text-xs whitespace-nowrap">
+                          {new Date(a.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                    )
+                  })}
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         )}
       </div>

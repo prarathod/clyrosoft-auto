@@ -23,8 +23,8 @@ export default function SalesLoginPage() {
       router.push('/sales')
       router.refresh()
     } else {
-      const d = await res.json()
-      setError(d.error || 'Invalid credentials')
+      const json = await res.json()
+      setError(json.error || 'Invalid credentials')
       setLoading(false)
     }
   }
@@ -33,9 +33,14 @@ export default function SalesLoginPage() {
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div className="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-2xl p-8">
         <div className="mb-8">
-          <p className="text-xs text-blue-400 font-semibold uppercase tracking-widest mb-1">Cliniqo</p>
-          <h1 className="text-2xl font-bold text-white">Sales Portal</h1>
-          <p className="text-sm text-gray-400 mt-1">Sign in to manage leads</p>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-black text-sm">C</span>
+            </div>
+            <span className="font-bold text-white text-lg">Cliniqo Sales</span>
+          </div>
+          <h1 className="text-xl font-bold text-white">Sales Portal</h1>
+          <p className="text-sm text-gray-400 mt-1">Sign in to manage your leads</p>
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -45,8 +50,8 @@ export default function SalesLoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="you@example.com"
+              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="rahul@gmail.com"
             />
           </div>
           <div>
@@ -56,15 +61,14 @@ export default function SalesLoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
+              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg text-sm disabled:opacity-50 transition-colors"
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>

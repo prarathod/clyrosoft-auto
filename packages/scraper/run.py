@@ -17,7 +17,7 @@ from datetime import datetime
 
 from scraper import scrape_query
 from sync import sync_leads, print_summary
-from config import SEARCH_QUERIES, MAX_RESULTS_PER_QUERY, HEADLESS
+from config import SEARCH_QUERIES, MAX_RESULTS_PER_QUERY, HEADLESS, get_all_queries
 
 
 def run_pipeline(
@@ -73,13 +73,20 @@ def run_pipeline(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Cliniqo scraper + sync pipeline")
     parser.add_argument("--query", help="Run a single query instead of all from config")
+    parser.add_argument("--city",  help="Scrape all professions in a city (e.g. Amravati, Bangalore)")
     parser.add_argument("--max", type=int, default=MAX_RESULTS_PER_QUERY)
     parser.add_argument("--headful", action="store_true", help="Show browser")
     parser.add_argument("--dry-run", action="store_true", help="Scrape but don't save to DB")
     parser.add_argument("--save", metavar="FILE", help="Save raw JSON to file")
     args = parser.parse_args()
 
-    queries = [args.query] if args.query else SEARCH_QUERIES
+    if args.query:
+        queries = [args.query]
+    elif args.city:
+        queries = get_all_queries(args.city)
+        print(f"  City: {args.city} → {len(queries)} queries ({len(queries)} profession × area combos)")
+    else:
+        queries = SEARCH_QUERIES
 
     run_pipeline(
         queries=queries,

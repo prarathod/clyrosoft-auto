@@ -1,136 +1,184 @@
+import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import Link from 'next/link'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-export default async function SalesDashboardPage() {
-  const employeeEmail = process.env.SALES_EMAIL!
-  const name = process.env.SALES_NAME ?? 'You'
+function startOfDay() {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d.toISOString()
+}
 
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
-  const todayEnd = new Date()
-  todayEnd.setHours(23, 59, 59, 999)
+function startOfMonth() {
+  const d = new Date()
+  d.setDate(1)
+  d.setHours(0, 0, 0, 0)
+  return d.toISOString()
+}
 
-  // Today's activity
+export default async function SalesDashboard() {
+  const token = cookies().get('sales_token')?.value ?? ''
+  const [email, name] = token.split('|')
+
+  // Fetch employee commission rates
+  const { data: emp } = await supabaseAdmin
+    .from('sales_employees')
+    .select('commission_per_contact, commission_per_conversion')
+    .eq('email', email)
+    .maybeSingle()
+
+  const commPerContact    = emp?.commission_per_contact    ?? 10
+  const commPerConversion = emp?.commission_per_conversion ?? 200
+
+  // Activity counts — today
   const { data: todayActivities } = await supabaseAdmin
     .from('lead_activities')
-    .select('action, created_at, leads(clinic_name, doctor_name, phone, city)')
-    .eq('employee_email', employeeEmail)
-    .gte('created_at', todayStart.toISOString())
-    .lte('created_at', todayEnd.toISOString())
-    .order('created_at', { ascending: false })
+    .select('activity_type')
+    .eq('employee_email', email)
+    .gte('created_at', startOfDay())
 
-  const todayCalls  = todayActivities?.filter(a => a.action === 'called').length  ?? 0
-  const todayWA     = todayActivities?.filter(a => a.action === 'wa_sent').length ?? 0
+  const todayCalls     = (todayActivities ?? []).filter(a => a.activity_type === 'call').length
+  const todayWA        = (todayActivities ?? []).filter(a => a.activity_type === 'whatsapp').length
+  const todayContacted = todayCalls + todayWA
 
-  // All-time commission stats
-  // Leads connected = leads where employee logged at least one action
-  const { data: connectedLeadIds } = await supabaseAdmin
+  // Activity counts — this month
+  const { data: monthActivities } = await supabaseAdmin
     .from('lead_activities')
-    .select('lead_id')
-    .eq('employee_email', employeeEmail)
+    .select('activity_type, lead_id')
+    .eq('employee_email', email)
+    .gte('created_at', startOfMonth())
 
-  const uniqueLeadIds = [...new Set((connectedLeadIds ?? []).map(r => r.lead_id))]
+  const monthContacted = new Set(
+    (monthActivities ?? [])
+      .filter(a => a.activity_type === 'call' || a.activity_type === 'whatsapp')
+      .map(a => a.lead_id)
+  ).size
 
-  // Leads that converted to paying (phone match between lead and client)
-  let convertedCount = 0
-  if (uniqueLeadIds.length > 0) {
-    const { data: leadPhones } = await supabaseAdmin
+  // Conversions this month: leads I contacted that are now 'paying'
+  const contactedLeadIds = [...new Set((monthActivities ?? []).map(a => a.lead_id))]
+  let monthConversions = 0
+  if (contactedLeadIds.length > 0) {
+    const { data: convertedLeads } = await supabaseAdmin
       .from('leads')
-      .select('phone')
-      .in('id', uniqueLeadIds)
-
-    if (leadPhones && leadPhones.length > 0) {
-      const phones = leadPhones.map(l => l.phone)
+      .select('id, demo_url')
+      .in('id', contactedLeadIds)
+    // Check clients table for paying status matching these demo URLs
+    const demoUrls = (convertedLeads ?? []).map(l => l.demo_url).filter(Boolean)
+    if (demoUrls.length > 0) {
       const { count } = await supabaseAdmin
         .from('clients')
-        .select('*', { count: 'exact', head: true })
-        .in('phone', phones)
+        .select('id', { count: 'exact' })
         .eq('status', 'paying')
-      convertedCount = count ?? 0
+        .in('subdomain', demoUrls.map(u => (u as string).split('/').pop() ?? ''))
+      monthConversions = count ?? 0
     }
   }
 
-  // Commission calculation: ₹200 per connected + ₹500 per converted
-  const commissionConnected  = uniqueLeadIds.length * 200
-  const commissionConverted  = convertedCount * 500
-  const totalCommission      = commissionConnected + commissionConverted
+  const monthEarnings = (monthContacted * commPerContact) + (monthConversions * commPerConversion)
+
+  // Recent activities
+  const { data: recentActivities } = await supabaseAdmin
+    .from('lead_activities')
+    .select('id, activity_type, note, created_at, lead_id')
+    .eq('employee_email', email)
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  // Get lead names for recent activities
+  const recentLeadIds = [...new Set((recentActivities ?? []).map(a => a.lead_id))]
+  const { data: recentLeads } = recentLeadIds.length > 0
+    ? await supabaseAdmin.from('leads').select('id, clinic_name, doctor_name').in('id', recentLeadIds)
+    : { data: [] }
+  const leadMap = Object.fromEntries((recentLeads ?? []).map(l => [l.id, l]))
+
+  const stats = [
+    { label: "Today's Calls",    value: todayCalls,      icon: '📞', color: 'blue'    },
+    { label: "Today's WA Sent",  value: todayWA,         icon: '💬', color: 'emerald' },
+    { label: 'Month Contacts',   value: monthContacted,  icon: '✅', color: 'purple'  },
+    { label: 'Conversions',      value: monthConversions, icon: '🎯', color: 'yellow' },
+  ]
+
+  const colorMap: Record<string, string> = {
+    blue:    'bg-blue-900/40 text-blue-400 border-blue-800',
+    emerald: 'bg-emerald-900/40 text-emerald-400 border-emerald-800',
+    purple:  'bg-purple-900/40 text-purple-400 border-purple-800',
+    yellow:  'bg-yellow-900/40 text-yellow-400 border-yellow-800',
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Good work, {name}! 👋</h1>
-        <p className="text-gray-400 text-sm mt-1">Here's your performance overview</p>
+        <h1 className="text-2xl font-black text-white mb-1">Welcome back, {name} 👋</h1>
+        <p className="text-gray-400 text-sm">Here's your performance for today and this month.</p>
       </div>
 
-      {/* Today's stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: "Today's Calls",    value: todayCalls,              color: 'text-blue-400' },
-          { label: "Today's WA Sent",  value: todayWA,                 color: 'text-green-400' },
-          { label: 'Total Connected',  value: uniqueLeadIds.length,    color: 'text-yellow-400' },
-          { label: 'Converted Paying', value: convertedCount,          color: 'text-purple-400' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-gray-400 text-xs mt-1">{stat.label}</p>
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats.map(s => (
+          <div key={s.label} className={`border rounded-xl p-4 ${colorMap[s.color]}`}>
+            <div className="text-2xl mb-1">{s.icon}</div>
+            <div className="text-2xl font-black">{s.value}</div>
+            <div className="text-xs mt-0.5 opacity-80">{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Commission */}
-      <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-800/50 rounded-xl p-5">
-        <p className="text-gray-400 text-sm mb-3 font-medium">Your Earnings</p>
-        <div className="flex flex-wrap gap-6">
+      {/* Earnings card */}
+      <div className="bg-emerald-900/20 border border-emerald-800 rounded-xl p-6">
+        <div className="flex items-center justify-between">
           <div>
-            <p className="text-white text-xs">Connected leads × ₹200</p>
-            <p className="text-blue-300 font-bold">{uniqueLeadIds.length} × ₹200 = ₹{commissionConnected.toLocaleString()}</p>
+            <p className="text-emerald-400 text-sm font-medium">This Month's Earnings</p>
+            <p className="text-3xl font-black text-white mt-1">₹{monthEarnings.toLocaleString('en-IN')}</p>
+            <p className="text-gray-400 text-xs mt-1">
+              {monthContacted} contacts × ₹{commPerContact} + {monthConversions} conversions × ₹{commPerConversion}
+            </p>
           </div>
-          <div>
-            <p className="text-white text-xs">Paid conversions × ₹500</p>
-            <p className="text-purple-300 font-bold">{convertedCount} × ₹500 = ₹{commissionConverted.toLocaleString()}</p>
-          </div>
-          <div className="sm:ml-auto">
-            <p className="text-white text-xs">Total Commission</p>
-            <p className="text-green-400 text-2xl font-bold">₹{totalCommission.toLocaleString()}</p>
-          </div>
+          <div className="text-5xl">💰</div>
         </div>
       </div>
 
-      {/* Today's activity log */}
+      {/* Quick actions */}
+      <div className="grid grid-cols-2 gap-4">
+        <Link href="/sales/leads" className="bg-gray-900 border border-gray-800 hover:border-emerald-700 rounded-xl p-5 transition-colors group">
+          <div className="text-2xl mb-2">📋</div>
+          <div className="font-semibold text-white group-hover:text-emerald-400 transition-colors">View All Leads</div>
+          <div className="text-xs text-gray-500 mt-0.5">Call, WhatsApp & track</div>
+        </Link>
+        <Link href="/sales/stats" className="bg-gray-900 border border-gray-800 hover:border-emerald-700 rounded-xl p-5 transition-colors group">
+          <div className="text-2xl mb-2">📊</div>
+          <div className="font-semibold text-white group-hover:text-emerald-400 transition-colors">My Stats</div>
+          <div className="text-xs text-gray-500 mt-0.5">Full history & earnings</div>
+        </Link>
+      </div>
+
+      {/* Recent activity */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-800">
-          <h2 className="text-white font-semibold">Today's Activity</h2>
+          <h2 className="font-semibold text-white">Recent Activity</h2>
         </div>
-        {!todayActivities || todayActivities.length === 0 ? (
-          <p className="text-gray-500 text-sm text-center py-8">No activity yet today. Start reaching out to leads!</p>
+        {(recentActivities ?? []).length === 0 ? (
+          <div className="p-8 text-center text-gray-500 text-sm">No activity yet. Start calling leads!</div>
         ) : (
           <div className="divide-y divide-gray-800">
-            {todayActivities.map((a: {
-              action: string
-              created_at: string
-              leads: { clinic_name: string; doctor_name: string; phone: string; city: string } | null
-            }, i) => (
-              <div key={i} className="px-5 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">
-                    {a.action === 'called' ? '📞' : a.action === 'wa_sent' ? '💬' : '📝'}
-                  </span>
-                  <div>
-                    <p className="text-white text-sm font-medium">
-                      {a.leads?.clinic_name ?? 'Unknown clinic'}
+            {(recentActivities ?? []).map(a => {
+              const lead = leadMap[a.lead_id]
+              const icon = a.activity_type === 'call' ? '📞' : a.activity_type === 'whatsapp' ? '💬' : a.activity_type === 'demo_created' ? '⚡' : '📝'
+              return (
+                <div key={a.id} className="px-5 py-3 flex items-start gap-3">
+                  <span className="text-lg mt-0.5">{icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-medium">
+                      {lead ? `${lead.clinic_name} — Dr. ${lead.doctor_name}` : 'Unknown lead'}
                     </p>
-                    <p className="text-gray-500 text-xs">
-                      Dr. {a.leads?.doctor_name} · {a.leads?.city} ·{' '}
-                      {a.action === 'called' ? 'Called' : a.action === 'wa_sent' ? 'WhatsApp sent' : 'Note added'}
-                    </p>
+                    {a.note && <p className="text-xs text-gray-400 truncate mt-0.5">{a.note}</p>}
                   </div>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {new Date(a.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
-                <p className="text-gray-600 text-xs">
-                  {new Date(a.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

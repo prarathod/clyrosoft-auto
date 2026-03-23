@@ -238,6 +238,46 @@ TIER2_CITY_AREAS = {
     # Tamil Nadu
     "Coimbatore": ["RS Puram Coimbatore", "Gandhipuram Coimbatore", "Peelamedu Coimbatore"],
     "Madurai": ["Anna Nagar Madurai", "KK Nagar Madurai"],
+    # Maharashtra — Amravati
+    "Amravati": [
+        # ─── Core city ───
+        "Rajapeth Amravati", "Camp Amravati", "Badnera Amravati",
+        "Old Amravati", "New Amravati",
+        # ─── Major residential areas ───
+        "Rukhmini Nagar Amravati", "Dastur Nagar Amravati", "Sai Nagar Amravati",
+        "Gopal Nagar Amravati", "Shivaji Nagar Amravati", "Vilas Nagar Amravati",
+        "Yashoda Nagar Amravati", "Arjun Nagar Amravati", "Jawahar Nagar Amravati",
+        "Shanti Nagar Amravati", "Ambika Nagar Amravati", "Saturna Amravati",
+        "Panchvati Amravati", "Rathi Nagar Amravati", "Sanjay Nagar Amravati",
+        "Gajanan Nagar Amravati", "Green Park Colony Amravati", "Navsari Amravati",
+        # ─── Roads / corridors ───
+        "Shegaon Rahatgaon Road Amravati", "Paratwada Road Amravati",
+        "Akola Road Amravati", "Nagpur Road Amravati", "Badnera Road Amravati",
+        "Morshi Road Amravati", "Walgaon Road Amravati", "Kathora Road Amravati",
+        "Shendurjana Road Amravati",
+        # ─── Chowks / high-density anchors ───
+        "Rajkamal Chowk Amravati", "Rajkamal Square Amravati",
+        "Irwin Chowk Amravati", "Irwin Square Amravati",
+        "Jaistambh Chowk Amravati", "Shyam Chowk Amravati",
+        "Gadge Nagar Square Amravati", "Chitra Chowk Amravati", "Pathan Chowk Amravati",
+        # ─── Old city / dense clusters ───
+        "Budhwara Amravati", "Juni Basti Amravati", "Amba Peth Amravati",
+        "Mominpura Amravati", "Maltekdi Amravati", "Chaprasipura Amravati",
+        "Ziri Amravati", "Kharbi Amravati",
+        # ─── Institutional / commercial ───
+        "MIDC Amravati", "University Area Amravati",
+        "SGBAU Amravati", "Ambadevi Area Amravati",
+        # ─── Transport hubs ───
+        "Amravati Railway Station Area", "Badnera Junction Amravati",
+        "Central Bus Stand Amravati", "Badnera Bus Stand Amravati",
+        # ─── Peripheral / semi-urban (HIGH VALUE) ───
+        "Rahatgaon Amravati", "Rahatgaon BK Amravati", "Rahatgaon KH Amravati",
+        "Nimbhora Amravati", "Nimbhora BK Amravati", "Nimbhora KH Amravati",
+        "Walgaon Amravati", "Kathora BK Amravati", "Kathora KH Amravati",
+        "Borgaon Dhande Amravati",
+        # ─── Extensions / emerging zones ───
+        "Gopal Nagar Extension Amravati",
+    ],
 }
 
 # Flat list of other cities for simple single-query sweeps

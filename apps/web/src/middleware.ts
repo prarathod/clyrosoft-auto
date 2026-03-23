@@ -22,17 +22,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ─── Sales rep auth (cookie-based) ───────────────────────────────────
+  // ─── Sales rep auth (cookie stores "email|name") ─────────────────────
   if (pathname.startsWith('/sales') && pathname !== '/sales/login') {
     const salesToken = request.cookies.get('sales_token')?.value
-    if (!salesToken || salesToken !== process.env.SALES_SECRET) {
+    if (!salesToken || !salesToken.includes('|')) {
       return NextResponse.redirect(new URL('/sales/login', request.url))
     }
     return NextResponse.next()
   }
   if (pathname === '/sales/login') {
     const salesToken = request.cookies.get('sales_token')?.value
-    if (salesToken === process.env.SALES_SECRET) {
+    if (salesToken && salesToken.includes('|')) {
       return NextResponse.redirect(new URL('/sales', request.url))
     }
     return NextResponse.next()
