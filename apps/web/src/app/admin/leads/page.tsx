@@ -30,10 +30,14 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
   if (area)   query = query.ilike('area', `%${area}%`)
   if (q)      query = query.or(`clinic_name.ilike.%${q}%,doctor_name.ilike.%${q}%`)
 
-  if (status === 'new')        query = query.eq('contacted', false)
-  if (status === 'contacted')  query = query.eq('contacted', true)
-  if (status === 'demo')       query = query.not('demo_url', 'is', null)
-  if (status === 'wa_invalid') query = query.eq('wa_invalid', true)
+  if (status === 'new')              query = query.eq('contacted', false)
+  if (status === 'contacted')        query = query.eq('contacted', true)
+  if (status === 'demo')             query = query.not('demo_url', 'is', null)
+  if (status === 'wa_invalid')       query = query.eq('wa_invalid', true)
+  if (status === 'lead_interested')  query = query.eq('lead_status', 'interested')
+  if (status === 'lead_callback')    query = query.eq('lead_status', 'callback')
+  if (status === 'lead_not_interested') query = query.eq('lead_status', 'not_interested')
+  if (status === 'lead_paid')        query = query.eq('lead_status', 'paid')
 
   const from = (page - 1) * PAGE_SIZE
   const to   = from + PAGE_SIZE - 1

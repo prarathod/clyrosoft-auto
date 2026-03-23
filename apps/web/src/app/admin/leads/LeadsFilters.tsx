@@ -10,8 +10,8 @@ interface Props {
 }
 
 export default function LeadsFilters({ cities, areas, total }: Props) {
-  const router      = useRouter()
-  const pathname    = usePathname()
+  const router       = useRouter()
+  const pathname     = usePathname()
   const searchParams = useSearchParams()
 
   const city   = searchParams.get('city')   ?? ''
@@ -19,32 +19,26 @@ export default function LeadsFilters({ cities, areas, total }: Props) {
   const status = searchParams.get('status') ?? ''
   const search = searchParams.get('q')      ?? ''
 
-  const set = useCallback((key: string, value: string) => {
+  // Single update — avoids double-push race condition
+  const setParam = useCallback((updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (value) params.set(key, value)
-    else        params.delete(key)
-    params.delete('page') // reset to page 1 on filter change
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) params.set(key, value)
+      else        params.delete(key)
+    }
+    params.delete('page')
     router.push(`${pathname}?${params.toString()}`)
   }, [searchParams, pathname, router])
 
   const clearAll = () => router.push(pathname)
-
   const hasFilter = city || area || status || search
-
-  // Filter areas by selected city (client-side — areas are already scoped by city if needed)
-  const filteredAreas = city
-    ? areas // ideally we'd scope to city, but areas are pre-fetched for the full dataset
-    : areas
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-400 font-medium">{total.toLocaleString()} leads</p>
         {hasFilter && (
-          <button
-            onClick={clearAll}
-            className="text-xs text-gray-500 hover:text-red-400 transition-colors"
-          >
+          <button onClick={clearAll} className="text-xs text-gray-500 hover:text-red-400 transition-colors">
             ✕ Clear filters
           </button>
         )}
@@ -58,8 +52,8 @@ export default function LeadsFilters({ cities, areas, total }: Props) {
             type="text"
             defaultValue={search}
             placeholder="Type to search…"
-            onKeyDown={(e) => { if (e.key === 'Enter') set('q', (e.target as HTMLInputElement).value) }}
-            onBlur={(e) => set('q', e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setParam({ q: (e.target as HTMLInputElement).value }) }}
+            onBlur={(e) => setParam({ q: e.target.value })}
             className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-600"
           />
         </div>
@@ -69,14 +63,22 @@ export default function LeadsFilters({ cities, areas, total }: Props) {
           <label className="block text-xs text-gray-500 mb-1">Status</label>
           <select
             value={status}
-            onChange={(e) => set('status', e.target.value)}
+            onChange={(e) => setParam({ status: e.target.value })}
             className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All</option>
-            <option value="new">New</option>
-            <option value="contacted">Contacted</option>
-            <option value="demo">Has Demo</option>
-            <option value="wa_invalid">WA Invalid</option>
+            <optgroup label="Contact status">
+              <option value="new">New (not contacted)</option>
+              <option value="contacted">Contacted</option>
+              <option value="demo">Has Demo</option>
+              <option value="wa_invalid">WA Invalid</option>
+            </optgroup>
+            <optgroup label="Lead status">
+              <option value="lead_interested">Interested</option>
+              <option value="lead_callback">Callback</option>
+              <option value="lead_not_interested">Not Interested</option>
+              <option value="lead_paid">Paid</option>
+            </optgroup>
           </select>
         </div>
 
@@ -85,7 +87,7 @@ export default function LeadsFilters({ cities, areas, total }: Props) {
           <label className="block text-xs text-gray-500 mb-1">City</label>
           <select
             value={city}
-            onChange={(e) => { set('city', e.target.value); set('area', '') }}
+            onChange={(e) => setParam({ city: e.target.value, area: '' })}
             className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All cities</option>
@@ -100,11 +102,11 @@ export default function LeadsFilters({ cities, areas, total }: Props) {
           <label className="block text-xs text-gray-500 mb-1">Area</label>
           <select
             value={area}
-            onChange={(e) => set('area', e.target.value)}
+            onChange={(e) => setParam({ area: e.target.value })}
             className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All areas</option>
-            {filteredAreas.map((a) => (
+            {areas.map((a) => (
               <option key={a} value={a}>{a}</option>
             ))}
           </select>
@@ -114,10 +116,10 @@ export default function LeadsFilters({ cities, areas, total }: Props) {
       {/* Active filter chips */}
       {hasFilter && (
         <div className="flex flex-wrap gap-2">
-          {search  && <Chip label={`"${search}"`}  onRemove={() => set('q', '')}      />}
-          {status  && <Chip label={status}          onRemove={() => set('status', '')} />}
-          {city    && <Chip label={city}            onRemove={() => { set('city', ''); set('area', '') }} />}
-          {area    && <Chip label={area}            onRemove={() => set('area', '')}   />}
+          {search && <Chip label={`"${search}"`}  onRemove={() => setParam({ q: '' })}      />}
+          {status && <Chip label={status}          onRemove={() => setParam({ status: '' })} />}
+          {city   && <Chip label={city}            onRemove={() => setParam({ city: '', area: '' })} />}
+          {area   && <Chip label={area}            onRemove={() => setParam({ area: '' })}   />}
         </div>
       )}
     </div>

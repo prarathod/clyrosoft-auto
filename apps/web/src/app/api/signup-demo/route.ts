@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { sendWelcomeEmail } from '@/lib/email'
 
 const TEMPLATE_URL = process.env.NEXT_PUBLIC_TEMPLATE_URL || 'https://demo.cliniqo.online'
 
@@ -162,6 +163,9 @@ export async function POST(req: NextRequest) {
     demo_url: `${TEMPLATE_URL}/${subdomain}`,
     login_password: password,
   })
+
+  // 6. Send welcome email with login credentials
+  await sendWelcomeEmail({ to: email, doctor_name, clinic_name, email, password })
 
   return NextResponse.json({ success: true, subdomain, demo_url: `${TEMPLATE_URL}/${subdomain}` })
 }

@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
+import { sendPaymentConfirmationEmail } from '@/lib/email'
+
+const PLAN_LABELS: Record<string, string> = {
+  monthly:  'Monthly',
+  '6months': '6 Months',
+  yearly:   '1 Year',
+}
 
 function getAdminSupabase() {
   return createClient(
@@ -31,8 +38,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 })
     }
 
-    // Mark client as paying
     const supabase = getAdminSupabase()
+
+    // Mark client as paying — fetch full details for the email
     const { data: client, error } = await supabase
       .from('clients')
       .update({
@@ -41,16 +49,23 @@ export async function POST(request: Request) {
         payment_date: new Date().toISOString(),
       })
       .eq('subdomain', subdomain)
-      .select('email, phone')
+      .select('email, phone, clinic_name, doctor_name')
       .single()
 
-    if (error) {
+    if (error || !client) {
       console.error('Supabase update error:', error)
       return NextResponse.json({ error: 'DB update failed' }, { status: 500 })
     }
 
-    // Also mark the matching lead as paid (so sales dashboard stays in sync)
-    if (client?.email || client?.phone) {
+    // Get saved password from leads table (stored at signup)
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('login_password')
+      .eq('email', client.email)
+      .maybeSingle()
+
+    // Mark matching lead as paid (keeps sales dashboard in sync)
+    if (client.email || client.phone) {
       const leadQuery = supabase.from('leads').update({ lead_status: 'paid', contacted: true })
       if (client.email) {
         await leadQuery.eq('email', client.email)
@@ -58,6 +73,18 @@ export async function POST(request: Request) {
         await leadQuery.eq('phone', client.phone)
       }
     }
+
+    // Send payment confirmation email
+    await sendPaymentConfirmationEmail({
+      to:          client.email,
+      doctor_name: client.doctor_name,
+      clinic_name: client.clinic_name,
+      email:       client.email,
+      password:    lead?.login_password ?? null,
+      subdomain,
+      plan_label:  PLAN_LABELS[plan] ?? plan,
+      amount,
+    })
 
     return NextResponse.json({ ok: true })
   } catch (err: any) {
