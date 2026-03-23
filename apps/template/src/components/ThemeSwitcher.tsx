@@ -5,12 +5,22 @@ import { themes, type ThemeKey } from '@/styles/themes'
 import { useTheme } from './ThemeProvider'
 
 const THEME_META: Record<ThemeKey, { label: string; swatch: string; desc: string }> = {
-  classic:  { label: 'Classic',  swatch: '#2563EB', desc: 'Blue · Serif · Centered'   },
-  modern:   { label: 'Modern',   swatch: '#8B5CF6', desc: 'Dark · Bold · Split'        },
-  minimal:  { label: 'Minimal',  swatch: '#18181B', desc: 'Black & White · Ultra-clean' },
-  vitality: { label: 'Vitality', swatch: '#059669', desc: 'Green · Fresh · Health'     },
-  elegant:  { label: 'Elegant',  swatch: '#B45309', desc: 'Navy · Gold · Luxury'       },
-  warm:     { label: 'Warm',     swatch: '#E11D48', desc: 'Coral · Friendly · Rounded' },
+  classic: { label: 'Classic', swatch: '#2563EB', desc: 'Blue · Serif · Centered' },
+  modern: { label: 'Modern', swatch: '#8B5CF6', desc: 'Dark · Bold · Split' },
+  minimal: { label: 'Minimal', swatch: '#18181B', desc: 'Black & White · Ultra-clean' },
+  vitality: { label: 'Vitality', swatch: '#059669', desc: 'Green · Fresh · Health' },
+  elegant: { label: 'Elegant', swatch: '#B45309', desc: 'Navy · Gold · Luxury' },
+  warm: { label: 'Warm', swatch: '#E11D48', desc: 'Coral · Friendly · Rounded' },
+  prestige: {
+    label: '',
+    swatch: '',
+    desc: ''
+  },
+  pulse: {
+    label: '',
+    swatch: '',
+    desc: ''
+  }
 }
 
 export default function ThemeSwitcher() {
