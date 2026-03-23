@@ -51,8 +51,8 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
     supabaseAdmin.from('leads').select('area').not('area', 'is', null).order('area'),
   ])
 
-  const cities = [...new Set((cityRows ?? []).map(r => r.city).filter(Boolean))].sort()
-  const areas  = [...new Set((areaRows  ?? []).map(r => r.area).filter(Boolean))].sort()
+  const cities = Array.from(new Set((cityRows ?? []).map(r => r.city).filter(Boolean))).sort()
+  const areas  = Array.from(new Set((areaRows  ?? []).map(r => r.area).filter(Boolean))).sort()
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
