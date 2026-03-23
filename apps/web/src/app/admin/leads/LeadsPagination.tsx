@@ -25,7 +25,7 @@ export default function LeadsPagination({ page, totalPages }: Props) {
   pages.add(1)
   pages.add(totalPages)
   for (let i = Math.max(1, page - 1); i <= Math.min(totalPages, page + 1); i++) pages.add(i)
-  const pageList = [...pages].sort((a, b) => a - b)
+  const pageList = Array.from(pages).sort((a, b) => a - b)
 
   return (
     <div className="flex items-center justify-between mt-4">
