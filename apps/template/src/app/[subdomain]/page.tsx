@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props) {
   if (!clinic) return {}
   return {
     title: `${clinic.clinic_name} | ${clinic.city}`,
-    description: `Book an appointment at ${clinic.clinic_name}, ${clinic.area}, ${clinic.city}`,
+    description: `Book an appointment at ${clinic.clinic_name}, ${clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}${clinic.city}`,
   }
 }
 

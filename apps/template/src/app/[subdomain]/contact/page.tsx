@@ -40,13 +40,14 @@ export default async function ContactPage({ params }: Props) {
               <div className="space-y-3 text-sm text-gray-600">
                 <p>🏥 <strong>{clinic.clinic_name}</strong></p>
                 <p>👨‍⚕️ Dr. {clinic.doctor_name}</p>
-                <p>📍 {clinic.area}, {clinic.city}</p>
-                <p>
-                  📞{' '}
-                  <a href={`tel:+91${clinic.phone}`} className="hover:text-gray-900">
-                    +91 {clinic.phone}
-                  </a>
-                </p>
+                <p>📍 {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}</p>
+                <a
+                  href={`tel:+91${clinic.phone}`}
+                  className="flex items-center gap-2 font-semibold text-white rounded-xl px-4 py-2.5 text-sm transition-opacity hover:opacity-90 w-fit"
+                  style={{ backgroundColor: config.primary_color }}
+                >
+                  📞 Call +91 {clinic.phone}
+                </a>
                 {clinic.email && (
                   <p>
                     ✉️{' '}

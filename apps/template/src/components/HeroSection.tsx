@@ -43,7 +43,7 @@ function HeroClassic({ clinic, config }: Omit<Props, 'theme'>) {
           className="inline-block text-xs uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 font-semibold"
           style={{ backgroundColor: 'var(--hero-accent)', color: 'var(--hero-text)' }}
         >
-          {config.display_name} · {clinic.area}, {clinic.city}
+          {config.display_name} · {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}
         </span>
         <h1
           className="text-5xl md:text-6xl font-bold mb-3 leading-tight"
@@ -125,7 +125,7 @@ function HeroModern({ clinic, config }: Omit<Props, 'theme'>) {
             Dr. {clinic.doctor_name}
           </p>
           <p className="mb-2 text-sm" style={{ color: 'var(--hero-subtext)' }}>
-            {clinic.area}, {clinic.city}
+            {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}
           </p>
           <p className="text-xl mb-10 mt-4 font-light" style={{ color: 'var(--hero-subtext)' }}>
             {clinic.tagline || config.hero_tagline}
@@ -190,7 +190,7 @@ function HeroMinimal({ clinic, config }: Omit<Props, 'theme'>) {
     >
       <div className="max-w-4xl mx-auto">
         <p className="text-xs uppercase tracking-[0.4em] mb-6" style={{ color: 'var(--text-muted)' }}>
-          {config.display_name} · {clinic.area}, {clinic.city}
+          {config.display_name} · {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}
         </p>
         <h1
           className="text-6xl md:text-8xl font-black leading-none mb-6 tracking-tight"
@@ -372,7 +372,7 @@ function HeroElegant({ clinic, config }: Omit<Props, 'theme'>) {
           Dr. {clinic.doctor_name}
         </p>
         <p className="text-sm mb-2" style={{ color: 'var(--hero-subtext)' }}>
-          {clinic.area}, {clinic.city}
+          {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}
         </p>
         <p
           className="text-xl italic font-light mt-4 mb-12"
@@ -450,7 +450,7 @@ function HeroWarm({ clinic, config }: Omit<Props, 'theme'>) {
           Dr. {clinic.doctor_name}
         </p>
         <p className="text-sm mb-8" style={{ color: 'var(--hero-subtext)' }}>
-          📍 {clinic.area}, {clinic.city}
+          📍 {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}
         </p>
         <p className="text-xl font-light mb-10" style={{ color: 'var(--hero-subtext)' }}>
           {clinic.tagline || config.hero_tagline}

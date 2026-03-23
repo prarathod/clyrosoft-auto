@@ -110,7 +110,7 @@ export default async function SalesDashboard() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-black text-white mb-1">Welcome back, {name} 👋</h1>
-        <p className="text-gray-400 text-sm">Here's your performance for today and this month.</p>
+        <p className="text-gray-400 text-sm">Here&apos;s your performance for today and this month.</p>
       </div>
 
       {/* Stats */}
@@ -128,7 +128,7 @@ export default async function SalesDashboard() {
       <div className="bg-emerald-900/20 border border-emerald-800 rounded-xl p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-emerald-400 text-sm font-medium">This Month's Earnings</p>
+            <p className="text-emerald-400 text-sm font-medium">This Month&apos;s Earnings</p>
             <p className="text-3xl font-black text-white mt-1">₹{monthEarnings.toLocaleString('en-IN')}</p>
             <p className="text-gray-400 text-xs mt-1">
               {monthContacted} contacts × ₹{commPerContact} + {monthConversions} conversions × ₹{commPerConversion}

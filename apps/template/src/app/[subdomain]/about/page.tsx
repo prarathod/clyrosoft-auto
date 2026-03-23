@@ -55,7 +55,7 @@ export default async function AboutPage({ params }: Props) {
       >
         <p className="text-sm uppercase tracking-widest opacity-80 mb-2">{clinic.clinic_name}</p>
         <h1 className="text-4xl font-bold mb-3">About Us</h1>
-        <p className="opacity-80">{config.display_name} in {clinic.area}, {clinic.city}</p>
+        <p className="opacity-80">{config.display_name} in {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}</p>
       </section>
 
       {/* Doctors Section */}
@@ -77,7 +77,7 @@ export default async function AboutPage({ params }: Props) {
           <div>
             <p className="text-sm uppercase tracking-widest mb-1" style={{ color: config.primary_color }}>{config.display_name}</p>
             <h3 className="text-3xl font-bold text-gray-900 mb-1">Dr. {clinic.doctor_name}</h3>
-            <p className="text-gray-500 mb-4">{clinic.clinic_name} · {clinic.area}, {clinic.city}</p>
+            <p className="text-gray-500 mb-4">{clinic.clinic_name} · {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}</p>
             <p className="text-gray-600 leading-relaxed">{primaryBio}</p>
             <a href={`tel:+91${clinic.phone}`} className="inline-block mt-4 text-sm font-medium text-gray-600 hover:text-gray-900">
               📞 +91 {clinic.phone}
@@ -131,7 +131,7 @@ export default async function AboutPage({ params }: Props) {
       <section className="py-16 text-center px-4">
         <h2 className="text-2xl font-bold text-gray-900 mb-3">Ready to visit us?</h2>
         <p className="text-gray-500 mb-6">
-          {clinic.clinic_name} is located in {clinic.area}, {clinic.city}.
+          {clinic.clinic_name} is located in {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}.
         </p>
         <a
           href={whatsappUrl}

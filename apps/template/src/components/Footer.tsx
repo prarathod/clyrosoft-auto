@@ -23,7 +23,7 @@ export default function Footer({ clinic, config }: Props) {
             Dr. {clinic.doctor_name}
           </p>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--footer-text)' }}>
-            {config.display_name} providing quality care in {clinic.area}, {clinic.city}.
+            {config.display_name} providing quality care in {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}.
           </p>
         </div>
 
@@ -56,7 +56,7 @@ export default function Footer({ clinic, config }: Props) {
             Contact
           </p>
           <ul className="space-y-2 text-sm" style={{ color: 'var(--footer-text)' }}>
-            <li>📍 {clinic.area}, {clinic.city}</li>
+            <li>📍 {clinic.area && clinic.area !== clinic.city ? `${clinic.area}, ` : ''}{clinic.city}</li>
             <li>
               <a href={`tel:+91${clinic.phone}`} className="hover:opacity-100 opacity-70 transition-opacity">
                 📞 +91 {clinic.phone}
