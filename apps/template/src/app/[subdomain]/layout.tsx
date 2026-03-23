@@ -27,7 +27,7 @@ export default async function ClinicLayout({ children, params }: Props) {
   return (
     <ThemeProvider initialTheme={theme.key}>
       {clinic.status === 'demo' && (
-        <DemoBanner clinicName={clinic.clinic_name} />
+        <DemoBanner clinicName={clinic.clinic_name} subdomain={params.subdomain} />
       )}
       <SectionHighlighter />
       <Navbar clinic={clinic} config={config} theme={theme} />
