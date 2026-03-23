@@ -24,10 +24,10 @@ export default async function AdminTeamPage() {
   // All-time activities per employee for commission calc
   const { data: allActivities } = await supabaseAdmin
     .from('lead_activities')
-    .select('employee_email, lead_id, activity_type')
+    .select('employee_email, lead_id, activity_type, created_at')
 
   // Get all lead phones for conversion matching
-  const allLeadIds = [...new Set((allActivities ?? []).map(a => a.lead_id))]
+  const allLeadIds = Array.from(new Set((allActivities ?? []).map(a => a.lead_id)))
   const { data: allLeads } = allLeadIds.length > 0
     ? await supabaseAdmin.from('leads').select('id, phone, clinic_name, doctor_name, city').in('id', allLeadIds)
     : { data: [] }
@@ -64,7 +64,7 @@ export default async function AdminTeamPage() {
     )
 
     // Conversions = leads I contacted that are now paying
-    const myConversions = [...totalContactedLeads].filter(lid => {
+    const myConversions = Array.from(totalContactedLeads).filter(lid => {
       const lead = leadMap[lid]
       return lead && payingPhones.has(lead.phone)
     }).length
@@ -77,7 +77,7 @@ export default async function AdminTeamPage() {
   })
 
   // Get lead details for recent activities display
-  const recentLeadIds = [...new Set((recentActivities ?? []).map(a => a.lead_id))]
+  const recentLeadIds = Array.from(new Set((recentActivities ?? []).map(a => a.lead_id)))
   const { data: recentLeads } = recentLeadIds.length > 0
     ? await supabaseAdmin.from('leads').select('id, clinic_name, doctor_name, city').in('id', recentLeadIds)
     : { data: [] }

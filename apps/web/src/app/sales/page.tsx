@@ -56,7 +56,7 @@ export default async function SalesDashboard() {
   ).size
 
   // Conversions this month: leads I contacted that are now 'paying'
-  const contactedLeadIds = Array.from(new Set((monthActivities ?? []).map(a => a.lead_id))]
+  const contactedLeadIds = Array.from(new Set((monthActivities ?? []).map(a => a.lead_id)))
   let monthConversions = 0
   if (contactedLeadIds.length > 0) {
     const { data: convertedLeads } = await supabaseAdmin
@@ -86,7 +86,7 @@ export default async function SalesDashboard() {
     .limit(10)
 
   // Get lead names for recent activities
-  const recentLeadIds = Array.from(new Set((recentActivities ?? []).map(a => a.lead_id))]
+  const recentLeadIds = Array.from(new Set((recentActivities ?? []).map(a => a.lead_id)))
   const { data: recentLeads } = recentLeadIds.length > 0
     ? await supabaseAdmin.from('leads').select('id, clinic_name, doctor_name').in('id', recentLeadIds)
     : { data: [] }

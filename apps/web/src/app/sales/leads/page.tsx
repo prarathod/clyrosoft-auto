@@ -25,9 +25,10 @@ export default async function SalesLeadsPage() {
         .order('created_at', { ascending: false })
     : { data: [] }
 
+  type ActivityRow = { lead_id: string; activity_type: string; note: string | null; created_at: string }
   // Group activities by lead_id
-  const activityMap: Record<string, typeof activities> = {}
-  for (const a of activities ?? []) {
+  const activityMap: Record<string, ActivityRow[]> = {}
+  for (const a of (activities ?? []) as ActivityRow[]) {
     if (!activityMap[a.lead_id]) activityMap[a.lead_id] = []
     activityMap[a.lead_id]!.push(a)
   }
