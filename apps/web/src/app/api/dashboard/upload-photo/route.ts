@@ -10,7 +10,7 @@ function cloudinarySign(params: Record<string, string>, secret: string) {
     .sort()
     .map((k) => `${k}=${params[k]}`)
     .join('&')
-  return crypto.createHash('sha256').update(str + secret).digest('hex')
+  return crypto.createHash('sha1').update(str + secret).digest('hex')
 }
 
 export async function POST(req: NextRequest) {
@@ -67,8 +67,8 @@ export async function POST(req: NextRequest) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    console.error('Cloudinary upload error:', err)
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    console.error('Cloudinary upload error:', JSON.stringify(err))
+    return NextResponse.json({ error: err?.error?.message ?? 'Upload failed' }, { status: 500 })
   }
 
   const data = await res.json()
