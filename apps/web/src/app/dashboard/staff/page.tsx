@@ -282,7 +282,7 @@ export default function StaffPage() {
             </div>
           )}
           {staff.length===0 ? (
-            <div className="text-center py-16 text-gray-400"><p className="text-4xl mb-3">👥</p><p className="font-medium">No staff yet</p><p className="text-sm mt-1">Click "Add Staff" to get started</p></div>
+            <div className="text-center py-16 text-gray-400"><p className="text-4xl mb-3">👥</p><p className="font-medium">No staff yet</p><p className="text-sm mt-1">Click &quot;Add Staff&quot; to get started</p></div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {staff.map(s=><StaffCard key={s.id} s={s} onEdit={openEdit} onToggle={toggleStatus} />)}
@@ -387,7 +387,7 @@ export default function StaffPage() {
                         <p className="text-xs text-gray-500 mt-0.5">
                           {l.leave_type} leave · {new Date(l.start_date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – {new Date(l.end_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · {l.days_count} day{l.days_count!==1?'s':''}
                         </p>
-                        {l.reason && <p className="text-xs text-gray-400 mt-0.5 italic">"{l.reason}"</p>}
+                        {l.reason && <p className="text-xs text-gray-400 mt-0.5 italic">&quot;{l.reason}&quot;</p>}
                       </div>
                       <div className="flex gap-2">
                         <button onClick={()=>updateLeaveStatus(l.id,'approved')} className="bg-green-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-green-700">Approve</button>
@@ -499,7 +499,7 @@ export default function StaffPage() {
                         </td>
                         <td className="px-4 py-3 font-bold text-gray-900">₹{net.toLocaleString('en-IN')}</td>
                         <td className="px-4 py-3">
-                          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${paid?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>{paid?`Paid ${row.paid_date?new Date(row.paid_date).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'':'pending'}`}</span>
+                          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${paid?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>{paid?`Paid ${row.paid_date?new Date(row.paid_date).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):''}` :'pending'}</span>
                         </td>
                         <td className="px-4 py-3">
                           {!paid && <button onClick={()=>markPaid(row)} className="bg-green-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-green-700">Mark Paid</button>}

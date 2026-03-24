@@ -86,7 +86,7 @@ export default async function AnalyticsPage() {
         <p className="text-sm text-gray-500">Traffic and engagement for {clinic.clinic_name}</p>
         {error && (
           <div className="mt-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-xs text-red-700">
-            ⚠ Could not load analytics. Make sure you've run the SQL migration to create the <code>analytics</code> table.
+            ⚠ Could not load analytics. Make sure you&apos;ve run the SQL migration to create the <code>analytics</code> table.
           </div>
         )}
       </div>
@@ -157,7 +157,7 @@ export default async function AnalyticsPage() {
           <p className="font-medium text-gray-900">No analytics yet</p>
           <p className="text-sm text-gray-500 mt-1 mb-4">Analytics will appear here once visitors interact with your site.</p>
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-800 text-left max-w-sm mx-auto">
-            <p className="font-semibold mb-1">Make sure you've run this SQL in Supabase:</p>
+            <p className="font-semibold mb-1">Make sure you&apos;ve run this SQL in Supabase:</p>
             <code className="block text-xs font-mono whitespace-pre">{`CREATE TABLE IF NOT EXISTS analytics (
   id bigserial PRIMARY KEY,
   subdomain text NOT NULL,
