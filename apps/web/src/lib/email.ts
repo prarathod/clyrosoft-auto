@@ -119,14 +119,20 @@ export async function sendWelcomeEmail({
   `)
 
   try {
-    await resend().emails.send({
+    const res = await resend().emails.send({
       from: FROM,
       to,
       subject: `Welcome to Cliniqo — Your demo site for ${clinic_name} is ready`,
       html,
     })
-  } catch (err) {
+    if (res.error) {
+      console.error('[email] sendWelcomeEmail error:', res.error)
+      return { success: false, error: res.error.message }
+    }
+    return { success: true, error: null }
+  } catch (err: any) {
     console.error('[email] sendWelcomeEmail error:', err)
+    return { success: false, error: err?.message ?? 'Unknown error' }
   }
 }
 

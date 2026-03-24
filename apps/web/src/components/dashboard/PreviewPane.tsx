@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 
 interface Props {
   subdomain:       string
+  siteUrl?:        string   // override the URL shown/used in the iframe (paid vs demo)
   refreshKey:      number
   highlightSection?: string
   liveTheme?:      string   // instantly reflected via postMessage (no save needed)
@@ -19,10 +20,10 @@ const DEVICES: { key: Device; label: string; icon: string; width: string }[] = [
   { key: 'desktop', label: 'Desktop', icon: '🖥',  width: '100%'  },
 ]
 
-export default function PreviewPane({ subdomain, refreshKey, highlightSection, liveTheme, autoSaving }: Props) {
+export default function PreviewPane({ subdomain, siteUrl, refreshKey, highlightSection, liveTheme, autoSaving }: Props) {
   const iframeRef   = useRef<HTMLIFrameElement>(null)
   const [device, setDevice] = useState<Device>('desktop')
-  const url = `${TEMPLATE_URL}/${subdomain}`
+  const url = siteUrl ?? `${TEMPLATE_URL}/${subdomain}`
 
   // Hard-reload the iframe when refreshKey bumps (after content auto-save)
   useEffect(() => {

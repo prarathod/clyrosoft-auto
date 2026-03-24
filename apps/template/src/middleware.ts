@@ -29,8 +29,12 @@ export function middleware(req: NextRequest) {
   }
 
   // Rewrite subdomain.domain.com/path → /subdomain/path
+  // Avoid doubling: if pathname already starts with /subdomain, don't prepend again
   const url = req.nextUrl.clone()
-  url.pathname = `/${subdomain}${req.nextUrl.pathname}`
+  const currentPath = req.nextUrl.pathname
+  if (!currentPath.startsWith(`/${subdomain}`)) {
+    url.pathname = `/${subdomain}${currentPath === '/' ? '' : currentPath}`
+  }
   return NextResponse.rewrite(url)
 }
 

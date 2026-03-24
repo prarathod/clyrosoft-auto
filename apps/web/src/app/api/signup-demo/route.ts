@@ -165,7 +165,13 @@ export async function POST(req: NextRequest) {
   })
 
   // 6. Send welcome email with login credentials
-  await sendWelcomeEmail({ to: email, doctor_name, clinic_name, email, password })
+  const emailResult = await sendWelcomeEmail({ to: email, doctor_name, clinic_name, email, password })
 
-  return NextResponse.json({ success: true, subdomain, demo_url: `${TEMPLATE_URL}/${subdomain}` })
+  return NextResponse.json({
+    success: true,
+    subdomain,
+    demo_url: `${TEMPLATE_URL}/${subdomain}`,
+    email_sent: emailResult?.success ?? false,
+    email_error: emailResult?.error ?? null,
+  })
 }

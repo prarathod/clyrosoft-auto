@@ -90,6 +90,7 @@ const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm
 export default function WebsitePage() {
   const [clinicId,       setClinicId]       = useState('')
   const [subdomain,      setSubdomain]      = useState('')
+  const [clinicStatus,   setClinicStatus]   = useState('demo')
   const [theme,          setTheme]          = useState('classic')
   const [tagline,        setTagline]        = useState('')
   const [doctorBio,      setDoctorBio]      = useState('')
@@ -133,6 +134,7 @@ export default function WebsitePage() {
           if (error || !data) return
           setClinicId(data.id)
           setSubdomain(data.subdomain)
+          setClinicStatus(data.status ?? 'demo')
           setTheme(data.theme ?? 'classic')
           setTagline(data.tagline ?? '')
           setDoctorBio(data.doctor_bio ?? '')
@@ -924,28 +926,34 @@ export default function WebsitePage() {
       </div>
 
       {/* ── Right: live preview ── */}
-      {subdomain && (
-        <div className="flex-1 min-w-0 hidden xl:flex flex-col sticky top-6" style={{ height: 'calc(100vh - 80px)' }}>
-          <PreviewPane
-            subdomain={subdomain}
-            refreshKey={previewKey}
-            highlightSection={highlightSec}
-            liveTheme={theme}
-            autoSaving={autoSaving}
-          />
-        </div>
-      )}
-
-      {subdomain && (
-        <a
-          href={`${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'http://localhost:3001'}/${subdomain}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="xl:hidden fixed bottom-20 right-4 bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2"
-        >
-          Preview ↗
-        </a>
-      )}
+      {subdomain && (() => {
+        const isPaid = clinicStatus === 'paying'
+        const siteUrl = isPaid
+          ? `https://${subdomain}.cliniqo.online`
+          : `${process.env.NEXT_PUBLIC_TEMPLATE_URL ?? 'https://demo.cliniqo.online'}/${subdomain}`
+        return (
+          <>
+            <div className="flex-1 min-w-0 hidden xl:flex flex-col sticky top-6" style={{ height: 'calc(100vh - 80px)' }}>
+              <PreviewPane
+                subdomain={subdomain}
+                siteUrl={siteUrl}
+                refreshKey={previewKey}
+                highlightSection={highlightSec}
+                liveTheme={theme}
+                autoSaving={autoSaving}
+              />
+            </div>
+            <a
+              href={siteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="xl:hidden fixed bottom-20 right-4 bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2"
+            >
+              Preview ↗
+            </a>
+          </>
+        )
+      })()}
     </div>
   )
 }
