@@ -32,16 +32,17 @@ const DEFAULT_STATS: ClinicStat[] = [
 
 function StatsRow({ stats, light = false }: { stats: ClinicStat[]; light?: boolean }) {
   return (
-    <div className="flex flex-wrap gap-6 mt-8">
+    <div className="flex flex-wrap gap-8 mt-8">
       {stats.map((s, i) => (
-        <div key={i} className="text-center">
+        <div key={i} className={`text-center stat-pop anim-delay-${i + 1}`}>
           <p
-            className="text-2xl font-black"
+            className="text-3xl font-black leading-none"
             style={{ color: light ? '#FFFFFF' : 'var(--primary)' }}
           >
             {s.value}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: light ? 'rgba(255,255,255,0.65)' : 'var(--text-muted)' }}>
+          <p className="text-xs mt-1.5 uppercase tracking-wide font-medium"
+            style={{ color: light ? 'rgba(255,255,255,0.65)' : 'var(--text-muted)' }}>
             {s.label}
           </p>
         </div>
@@ -83,19 +84,19 @@ function HeroClassic({ clinic, config }: Omit<Props, 'theme'>) {
         <p className="reveal reveal-delay-2 text-2xl font-light italic mb-10 mt-4" style={{ color: 'var(--hero-subtext)', fontFamily: 'var(--font-heading)' }}>
           &ldquo;{clinic.tagline || config.hero_tagline}&rdquo;
         </p>
-        <div className="reveal reveal-delay-3 flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="slide-left anim-delay-3 flex flex-col sm:flex-row gap-4 justify-center">
           <a href={url} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 bg-white font-bold px-8 py-4 rounded-full text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+            className="btn-shine inline-flex items-center justify-center gap-2 bg-white font-bold px-8 py-4 rounded-full text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-105"
             style={{ color: 'var(--primary)' }}>
             <WaIcon /> Book Appointment
           </a>
           <a href={`tel:+91${clinic.phone}`}
-            className="inline-flex items-center justify-center gap-2 font-semibold px-8 py-4 rounded-full text-lg transition-all border"
+            className="btn-shine inline-flex items-center justify-center gap-2 font-semibold px-8 py-4 rounded-full text-lg transition-all border hover:scale-105"
             style={{ backgroundColor: 'var(--hero-accent)', color: 'var(--hero-text)', borderColor: 'rgba(255,255,255,0.3)' }}>
             📞 Call Us
           </a>
         </div>
-        <div className="reveal reveal-delay-4 flex justify-center">
+        <div className="slide-left anim-delay-4 flex justify-center">
           <StatsRow stats={stats} light />
         </div>
       </div>
@@ -112,47 +113,52 @@ function HeroModern({ clinic, config }: Omit<Props, 'theme'>) {
       <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-20 pointer-events-none"
         style={{ background: 'radial-gradient(circle, var(--primary), transparent 70%)' }} />
       <div className="relative max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-        <div style={{ color: 'var(--hero-text)' }}>
-          <span className="reveal inline-block text-xs uppercase tracking-[0.3em] px-3 py-1 rounded mb-6 font-semibold"
-            style={{ backgroundColor: 'var(--hero-accent)', color: 'var(--primary)' }}>
-            {config.display_name}
+        <div className="slide-left" style={{ color: 'var(--hero-text)' }}>
+          <span className="slide-left anim-delay-1 inline-block text-xs uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-6 font-semibold"
+            style={{ backgroundColor: 'var(--hero-accent)', color: 'var(--primary)', border: '1px solid var(--primary)' }}>
+            ● {config.display_name}
           </span>
-          <h1 className="reveal reveal-delay-1 text-5xl md:text-7xl font-black leading-none mb-4 tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+          <h1 className="slide-left anim-delay-2 text-5xl md:text-7xl font-black leading-none mb-4 tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
             {clinic.clinic_name}
           </h1>
-          <p className="reveal reveal-delay-2 text-lg font-medium mb-1" style={{ color: 'var(--primary)' }}>
+          <p className="slide-left anim-delay-2 text-lg font-medium mb-1" style={{ color: 'var(--primary)' }}>
             Dr. {clinic.doctor_name}
           </p>
-          <p className="reveal reveal-delay-2 mb-2 text-sm" style={{ color: 'var(--hero-subtext)' }}>
+          <p className="slide-left anim-delay-2 mb-2 text-sm" style={{ color: 'var(--hero-subtext)' }}>
             {locationStr(clinic)}
           </p>
-          <p className="reveal reveal-delay-2 text-xl mb-8 mt-4 font-light" style={{ color: 'var(--hero-subtext)' }}>
+          <p className="slide-left anim-delay-3 text-xl mb-8 mt-4 font-light" style={{ color: 'var(--hero-subtext)' }}>
             {clinic.tagline || config.hero_tagline}
           </p>
-          <div className="reveal reveal-delay-3 flex flex-wrap gap-4">
+          <div className="slide-left anim-delay-3 flex flex-wrap gap-4">
             <a href={url} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 font-bold px-8 py-4 rounded-full text-base shadow-lg hover:opacity-90 transition-opacity text-white"
+              className="btn-shine inline-flex items-center gap-2 font-bold px-8 py-4 rounded-full text-base shadow-lg hover:scale-105 transition-transform text-white"
               style={{ backgroundColor: 'var(--primary)' }}>
               <WaIcon /> Book Now
             </a>
             <a href={`tel:+91${clinic.phone}`}
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold border transition-all"
+              className="btn-shine inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-semibold border hover:scale-105 transition-transform"
               style={{ borderColor: 'var(--card-border)', color: 'var(--hero-text)', backgroundColor: 'var(--hero-accent)' }}>
               📞 {clinic.phone}
             </a>
           </div>
-          <div className="reveal reveal-delay-4">
+          <div className="slide-left anim-delay-4">
             <StatsRow stats={stats} light />
           </div>
         </div>
-        <div className="hidden md:flex justify-center">
+        <div className="slide-right anim-delay-2 hidden md:flex justify-center">
           {clinic.photos?.[0] ? (
-            <div className="w-80 h-80 rounded-2xl overflow-hidden shadow-2xl" style={{ border: '1px solid var(--card-border)' }}>
+            <div className="relative w-80 h-80 rounded-2xl overflow-hidden shadow-2xl hover:scale-105 transition-transform duration-500" style={{ border: '2px solid var(--card-border)' }}>
               <img src={clinic.photos[0]} alt={clinic.clinic_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              {/* Overlay badge */}
+              <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2 text-white text-xs font-semibold flex items-center gap-2">
+                <span className="ping-badge w-2 h-2 rounded-full bg-green-400 inline-block flex-shrink-0" />
+                Accepting Appointments
+              </div>
             </div>
           ) : (
-            <div className="w-72 h-72 rounded-full flex items-center justify-center text-8xl shadow-2xl"
-              style={{ backgroundColor: 'var(--hero-accent)', border: '1px solid var(--card-border)' }}>
+            <div className="w-72 h-72 rounded-full flex items-center justify-center text-8xl shadow-2xl float-anim"
+              style={{ backgroundColor: 'var(--hero-accent)', border: '2px solid var(--card-border)' }}>
               🏥
             </div>
           )}
