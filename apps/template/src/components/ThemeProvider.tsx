@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { getTheme, themeToVars, themes, type ThemeKey, type Theme } from '@/styles/themes'
 
 interface ThemeCtx {
@@ -26,6 +26,17 @@ export default function ThemeProvider({ initialTheme, children }: Props) {
     (initialTheme in themes ? initialTheme : 'classic') as ThemeKey
   )
   const theme = getTheme(themeKey)
+
+  // Listen for live-preview messages from the dashboard iframe parent
+  useEffect(() => {
+    function handleMessage(e: MessageEvent) {
+      if (e.data?.type === 'PREVIEW_THEME' && e.data.theme in themes) {
+        setThemeKey(e.data.theme as ThemeKey)
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme: setThemeKey }}>

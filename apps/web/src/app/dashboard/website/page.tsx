@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import dynamic from 'next/dynamic'
 
@@ -112,9 +112,12 @@ export default function WebsitePage() {
   const [aiDone,         setAiDone]         = useState(false)
   const [saving,         setSaving]         = useState(false)
   const [saved,          setSaved]          = useState(false)
+  const [autoSaving,     setAutoSaving]     = useState(false)
   const [previewKey,     setPreviewKey]     = useState(0)
   const [openSection,    setOpenSection]    = useState<string>('template')
   const [highlightSec,   setHighlightSec]   = useState<string | undefined>()
+  const autoSaveTimer                        = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const loadedRef                            = useRef(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -145,9 +148,36 @@ export default function WebsitePage() {
           setOpeningHours(Array.isArray(data.opening_hours) ? data.opening_hours : [])
           setSocialLinks(data.social_links && typeof data.social_links === 'object' ? data.social_links : {})
           setAnnouncement(data.announcement ?? '')
+          // Mark initial load done — auto-save won't fire before this
+          setTimeout(() => { loadedRef.current = true }, 100)
         })
     })
   }, [])
+
+  // ── Auto-save content changes (1.5s debounce) ─────────────────────────────
+  useEffect(() => {
+    if (!loadedRef.current || !clinicId) return
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    setAutoSaving(true)
+    autoSaveTimer.current = setTimeout(async () => {
+      const supabase = createClient()
+      await supabase.from('clients').update({
+        tagline, doctor_bio: doctorBio, cta_text: ctaText,
+        services, testimonials, phone, google_maps_link: googleMapsLink,
+        photos, doctor_name: doctorName, doctors,
+        stats:         stats.length        ? stats        : null,
+        opening_hours: openingHours.length ? openingHours : null,
+        social_links:  Object.values(socialLinks).some(Boolean) ? socialLinks : null,
+        announcement:  announcement.trim() || null,
+      }).eq('id', clinicId)
+      setAutoSaving(false)
+      setPreviewKey((k) => k + 1)
+    }, 1500)
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tagline, doctorBio, ctaText, services, testimonials, phone,
+      googleMapsLink, photos, doctorName, doctors, stats,
+      openingHours, socialLinks, announcement])
 
   function handleSectionOpen(id: string) {
     setOpenSection(id === openSection ? '' : id)
@@ -234,20 +264,14 @@ export default function WebsitePage() {
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
-    if (!cloudName || !uploadPreset) {
-      alert('Cloudinary is not configured yet. Ask admin to set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.')
-      return
-    }
     setUploadingPhoto(true)
     try {
       const form = new FormData()
       form.append('file', file)
-      form.append('upload_preset', uploadPreset)
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: form })
+      const res  = await fetch('/api/dashboard/upload-photo', { method: 'POST', body: form })
       const data = await res.json()
-      if (data.secure_url) setPhotos((prev) => [...prev, data.secure_url])
+      if (data.url) setPhotos((prev) => [...prev, data.url])
+      else alert(data.error ?? 'Upload failed')
     } finally {
       setUploadingPhoto(false)
       e.target.value = ''
@@ -360,22 +384,17 @@ export default function WebsitePage() {
                           onChange={async (e) => {
                             const file = e.target.files?.[0]
                             if (!file) return
-                            const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-                            const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
-                            if (!cloudName || !uploadPreset) {
-                              alert('Cloudinary not configured. Paste a URL below instead.')
-                              return
-                            }
                             setUploadingPhoto(true)
                             try {
                               const form = new FormData()
                               form.append('file', file)
-                              form.append('upload_preset', uploadPreset)
-                              const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: form })
+                              const res  = await fetch('/api/dashboard/upload-photo', { method: 'POST', body: form })
                               const data = await res.json()
-                              if (data.secure_url) {
+                              if (data.url) {
                                 // Replace photos[0] with new upload
-                                setPhotos((prev) => [data.secure_url, ...prev.slice(1)])
+                                setPhotos((prev) => [data.url, ...prev.slice(1)])
+                              } else {
+                                alert(data.error ?? 'Upload failed')
                               }
                             } finally {
                               setUploadingPhoto(false)
@@ -696,11 +715,7 @@ export default function WebsitePage() {
                       </>
                     )}
                   </label>
-                  {!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && (
-                    <p className="text-xs text-amber-600 mt-1.5 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200">
-                      ⚠ Cloudinary not configured — add <code className="font-mono">NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME</code> & <code className="font-mono">NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET</code> to enable uploads
-                    </p>
-                  )}
+                  <p className="text-xs text-gray-400 mt-1">Max 5 MB · JPG, PNG, WebP</p>
                 </div>
 
                 {/* Add by URL */}
@@ -911,11 +926,13 @@ export default function WebsitePage() {
       {/* ── Right: live preview ── */}
       {subdomain && (
         <div className="flex-1 min-w-0 hidden xl:flex flex-col sticky top-6" style={{ height: 'calc(100vh - 80px)' }}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Live Preview</span>
-            <button onClick={() => setPreviewKey((k) => k + 1)} className="text-xs text-blue-600 hover:underline">Refresh</button>
-          </div>
-          <PreviewPane subdomain={subdomain} refreshKey={previewKey} highlightSection={highlightSec} />
+          <PreviewPane
+            subdomain={subdomain}
+            refreshKey={previewKey}
+            highlightSection={highlightSec}
+            liveTheme={theme}
+            autoSaving={autoSaving}
+          />
         </div>
       )}
 
