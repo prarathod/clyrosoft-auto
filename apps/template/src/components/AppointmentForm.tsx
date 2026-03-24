@@ -7,9 +7,10 @@ interface Props {
   doctorName: string
   services: string[]
   primaryColor: string
+  subdomain?: string
 }
 
-export default function AppointmentForm({ phone, doctorName, services, primaryColor }: Props) {
+export default function AppointmentForm({ phone, doctorName, services, primaryColor, subdomain }: Props) {
   const [form, setForm] = useState({
     name: '',
     phone: '',
@@ -23,6 +24,13 @@ export default function AppointmentForm({ phone, doctorName, services, primaryCo
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (subdomain) {
+      fetch('/api/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subdomain, event_type: 'form_submit' }),
+      }).catch(() => {})
+    }
     const text = [
       `Hi Dr. ${doctorName}, I'd like to book an appointment.`,
       `Name: ${form.name}`,

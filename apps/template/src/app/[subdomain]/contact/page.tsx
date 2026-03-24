@@ -31,6 +31,7 @@ export default async function ContactPage({ params }: Props) {
             doctorName={clinic.doctor_name}
             services={config.services}
             primaryColor={config.primary_color}
+            subdomain={params.subdomain}
           />
 
           {/* Contact Info */}

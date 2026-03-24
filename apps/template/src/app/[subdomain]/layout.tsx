@@ -12,6 +12,7 @@ import DemoBanner from '@/components/DemoBanner'
 import SectionHighlighter from '@/components/SectionHighlighter'
 import ScrollRevealInit from '@/components/ScrollRevealInit'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
+import AnalyticsTracker from '@/components/AnalyticsTracker'
 
 interface Props {
   children: React.ReactNode
@@ -27,6 +28,7 @@ export default async function ClinicLayout({ children, params }: Props) {
 
   return (
     <ThemeProvider initialTheme={theme.key}>
+      <AnalyticsTracker subdomain={params.subdomain} />
       <ScrollRevealInit />
       <SectionHighlighter />
       {clinic.announcement && <AnnouncementBanner text={clinic.announcement} />}
@@ -36,7 +38,7 @@ export default async function ClinicLayout({ children, params }: Props) {
       <Navbar clinic={clinic} config={config} theme={theme} />
       {children}
       <div data-section="footer"><Footer clinic={clinic} config={config} /></div>
-      <FloatingWhatsApp phone={clinic.phone} doctorName={clinic.doctor_name} />
+      <FloatingWhatsApp phone={clinic.phone} doctorName={clinic.doctor_name} subdomain={params.subdomain} />
       <ThemeSwitcher />
     </ThemeProvider>
   )

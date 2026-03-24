@@ -1,18 +1,33 @@
+'use client'
+
 interface Props {
   phone: string
   doctorName: string
+  subdomain?: string
 }
 
-export default function FloatingWhatsApp({ phone, doctorName }: Props) {
+export default function FloatingWhatsApp({ phone, doctorName, subdomain }: Props) {
   const message = encodeURIComponent(
     `Hi Dr. ${doctorName}, I would like to book an appointment.`
   )
+
+  function handleClick() {
+    if (subdomain) {
+      fetch('/api/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subdomain, event_type: 'whatsapp_click' }),
+      }).catch(() => {})
+    }
+  }
+
   return (
     <a
       href={`https://wa.me/91${phone}?text=${message}`}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp"
+      onClick={handleClick}
       className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-xl transition-all hover:scale-110 flex items-center justify-center"
     >
       <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
