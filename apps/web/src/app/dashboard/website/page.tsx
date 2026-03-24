@@ -104,6 +104,12 @@ export default function WebsitePage() {
   const [photos,         setPhotos]         = useState<string[]>([])
   const [newPhotoUrl,    setNewPhotoUrl]    = useState('')
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [stats,          setStats]          = useState<ClinicStat[]>([])
+  const [openingHours,   setOpeningHours]   = useState<OpeningHours[]>([])
+  const [socialLinks,    setSocialLinks]    = useState<SocialLinks>({})
+  const [announcement,   setAnnouncement]   = useState('')
+  const [aiLoading,      setAiLoading]      = useState(false)
+  const [aiDone,         setAiDone]         = useState(false)
   const [saving,         setSaving]         = useState(false)
   const [saved,          setSaved]          = useState(false)
   const [previewKey,     setPreviewKey]     = useState(0)
@@ -135,6 +141,10 @@ export default function WebsitePage() {
           setPhotos(Array.isArray(data.photos) ? data.photos : [])
           setDoctorName(data.doctor_name ?? '')
           setDoctors(Array.isArray(data.doctors) ? data.doctors : [])
+          setStats(Array.isArray(data.stats) ? data.stats : [])
+          setOpeningHours(Array.isArray(data.opening_hours) ? data.opening_hours : [])
+          setSocialLinks(data.social_links && typeof data.social_links === 'object' ? data.social_links : {})
+          setAnnouncement(data.announcement ?? '')
         })
     })
   }, [])
@@ -161,12 +171,38 @@ export default function WebsitePage() {
         theme, tagline, doctor_bio: doctorBio, cta_text: ctaText,
         services, testimonials, phone, google_maps_link: googleMapsLink,
         photos, doctor_name: doctorName, doctors,
+        stats:         stats.length        ? stats        : null,
+        opening_hours: openingHours.length ? openingHours : null,
+        social_links:  Object.values(socialLinks).some(Boolean) ? socialLinks : null,
+        announcement:  announcement.trim() || null,
       })
       .eq('id', clinicId)
     setSaving(false)
     setSaved(true)
     setPreviewKey((k) => k + 1)
     setTimeout(() => setSaved(false), 2500)
+  }
+
+  async function handleAiGenerate() {
+    setAiLoading(true)
+    setAiDone(false)
+    try {
+      const res = await fetch('/api/dashboard/generate-content', { method: 'POST' })
+      const { content, error } = await res.json()
+      if (error) { alert(error); return }
+      if (content.tagline)     setTagline(content.tagline)
+      if (content.doctor_bio)  setDoctorBio(content.doctor_bio)
+      if (Array.isArray(content.services) && content.services.length)
+        setServices(content.services)
+      if (Array.isArray(content.testimonials) && content.testimonials.length)
+        setTestimonials(content.testimonials)
+      setAiDone(true)
+      setTimeout(() => setAiDone(false), 4000)
+    } catch {
+      alert('AI generation failed. Please try again.')
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   function addService() {
@@ -226,6 +262,29 @@ export default function WebsitePage() {
         <div className="mb-4">
           <h2 className="text-xl font-bold text-gray-900 mb-1">Website Editor</h2>
           <p className="text-sm text-gray-500">Click a section to edit it. Changes apply after saving.</p>
+        </div>
+
+        {/* AI Generate banner */}
+        <div className="rounded-xl border border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50 p-4 flex items-center justify-between gap-3 mb-1">
+          <div>
+            <p className="font-semibold text-sm text-purple-900">✨ AI Content Generator</p>
+            <p className="text-xs text-purple-600 mt-0.5">
+              {aiDone
+                ? '✓ Tagline, bio, services & reviews filled! Review and save.'
+                : 'Auto-write your tagline, doctor bio, services & patient reviews.'}
+            </p>
+          </div>
+          <button
+            onClick={handleAiGenerate}
+            disabled={aiLoading}
+            className="flex-shrink-0 flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition-colors"
+          >
+            {aiLoading ? (
+              <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating…</>
+            ) : (
+              '✨ Generate'
+            )}
+          </button>
         </div>
 
         {SECTIONS.map(({ id, icon, label, hint }) => (
@@ -400,6 +459,73 @@ export default function WebsitePage() {
                     className={inputClass}
                   />
                 </div>
+              </div>
+            )}
+
+            {/* ── STATS ── */}
+            {id === 'stats' && (
+              <div className="space-y-4">
+                <p className="text-xs text-gray-500">
+                  These numbers appear on every hero theme. Leave empty to use defaults (10+ years, 5K+ patients, 4.8★).
+                </p>
+                {stats.length === 0 && (
+                  <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    Using defaults — add your real numbers below to personalise.
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {stats.map((s, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input
+                        value={s.value}
+                        onChange={(e) => setStats(stats.map((x, idx) => idx === i ? { ...x, value: e.target.value } : x))}
+                        placeholder="10+"
+                        className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                      />
+                      <input
+                        value={s.label}
+                        onChange={(e) => setStats(stats.map((x, idx) => idx === i ? { ...x, label: e.target.value } : x))}
+                        placeholder="Years Experience"
+                        className={inputClass}
+                      />
+                      <button onClick={() => setStats(stats.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600 px-1 flex-shrink-0">✕</button>
+                    </div>
+                  ))}
+                </div>
+                {stats.length < 4 && (
+                  <button
+                    onClick={() => setStats([...stats, { value: '', label: '' }])}
+                    className="w-full border-2 border-dashed border-gray-300 text-gray-500 text-sm py-2.5 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
+                  >
+                    + Add Stat
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* ── ANNOUNCEMENT ── */}
+            {id === 'announcement' && (
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Announcement Bar
+                  <span className="ml-2 text-xs font-normal text-gray-400">shown in a coloured strip at the top of your site</span>
+                </label>
+                <input
+                  type="text"
+                  value={announcement}
+                  onChange={(e) => setAnnouncement(e.target.value)}
+                  placeholder="e.g. Now open on Sundays! · New branch opening soon"
+                  className={inputClass}
+                  maxLength={120}
+                />
+                {announcement && (
+                  <div className="rounded-lg px-4 py-2 text-center text-xs font-semibold text-white" style={{ backgroundColor: '#2563EB' }}>
+                    📢 &nbsp;{announcement}
+                  </div>
+                )}
+                {announcement && (
+                  <button onClick={() => setAnnouncement('')} className="text-xs text-red-500 hover:underline">Remove announcement</button>
+                )}
               </div>
             )}
 
@@ -685,6 +811,69 @@ export default function WebsitePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Google Maps Link</label>
                   <input type="url" value={googleMapsLink} onChange={(e) => setGoogleMapsLink(e.target.value)} placeholder="https://maps.google.com/..." className={inputClass} />
                 </div>
+              </div>
+            )}
+
+            {/* ── OPENING HOURS ── */}
+            {id === 'hours' && (
+              <div className="space-y-4">
+                <p className="text-xs text-gray-500">Shown in the footer of your website. Leave empty to hide.</p>
+                <div className="space-y-3">
+                  {openingHours.map((h, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input
+                        value={h.label}
+                        onChange={(e) => setOpeningHours(openingHours.map((x, idx) => idx === i ? { ...x, label: e.target.value } : x))}
+                        placeholder="Mon – Sat"
+                        className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0"
+                      />
+                      <input
+                        value={h.hours}
+                        onChange={(e) => setOpeningHours(openingHours.map((x, idx) => idx === i ? { ...x, hours: e.target.value } : x))}
+                        placeholder="9:00 AM – 7:00 PM"
+                        className={inputClass}
+                      />
+                      <button onClick={() => setOpeningHours(openingHours.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600 px-1 flex-shrink-0">✕</button>
+                    </div>
+                  ))}
+                </div>
+                {openingHours.length < 5 && (
+                  <button
+                    onClick={() => setOpeningHours([...openingHours, { label: '', hours: '' }])}
+                    className="w-full border-2 border-dashed border-gray-300 text-gray-500 text-sm py-2.5 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
+                  >
+                    + Add Hours Row
+                  </button>
+                )}
+                <div className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 space-y-0.5">
+                  <p className="font-medium text-gray-500">Example</p>
+                  <p>Mon – Sat · 9:00 AM – 7:00 PM</p>
+                  <p>Sunday · 10:00 AM – 2:00 PM</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── SOCIAL LINKS ── */}
+            {id === 'social' && (
+              <div className="space-y-4">
+                <p className="text-xs text-gray-500">Social icons appear in the footer. Leave blank to hide.</p>
+                {([
+                  ['instagram', '📸 Instagram', 'https://instagram.com/yourclinic'],
+                  ['facebook',  '📘 Facebook',  'https://facebook.com/yourclinic'],
+                  ['google',    '⭐ Google Reviews', 'https://g.page/yourclinic'],
+                  ['youtube',   '▶️ YouTube',   'https://youtube.com/@yourclinic'],
+                ] as [keyof SocialLinks, string, string][]).map(([key, label, placeholder]) => (
+                  <div key={key}>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                    <input
+                      type="url"
+                      value={socialLinks[key] ?? ''}
+                      onChange={(e) => setSocialLinks({ ...socialLinks, [key]: e.target.value || undefined })}
+                      placeholder={placeholder}
+                      className={inputClass}
+                    />
+                  </div>
+                ))}
               </div>
             )}
 
