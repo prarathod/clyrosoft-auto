@@ -219,7 +219,7 @@ export default function StaffPage() {
   const TABS = [
     { key:'team',       label:`👥 Team (${activeStaff.length})` },
     { key:'attendance', label:'📋 Attendance' },
-    { key:'leaves',     label:`🌴 Leaves${pendingLeaves.length>0?` (${pendingLeaves.length})`:''}` },
+    { key:'leaves',     label:`🌴 Leaves${pendingLeaves.length>0?' ('+pendingLeaves.length+')':''}` },
     { key:'payroll',    label:'💰 Payroll' },
   ] as const
 

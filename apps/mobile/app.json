@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Cliniqo Staff",
+    "slug": "cliniqo-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2563EB"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.cliniqo.staff",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Cliniqo needs location to verify your attendance check-in/out.",
+        "NSCameraUsageDescription": "Cliniqo needs camera access to scan inventory barcodes/QR codes."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2563EB"
+      },
+      "package": "com.cliniqo.staff",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "VIBRATE"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Cliniqo needs location to verify attendance check-in/out."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Cliniqo to access your camera to scan barcodes."
+        }
+      ]
+    ],
+    "scheme": "cliniqo",
+    "extra": {
+      "supabaseUrl": "https://your-project.supabase.co",
+      "supabaseAnonKey": "your-anon-key"
+    }
+  }
+}
